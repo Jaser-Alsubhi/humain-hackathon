@@ -145,3 +145,26 @@ def db_status():
     cmd = ("mysql -uroot -p\"$MYSQL_ROOT_PASSWORD\" -e "
            "\"SHOW VARIABLES LIKE 'max_connections'; SHOW STATUS LIKE 'Threads_connected'; SHOW PROCESSLIST\" 2>&1")
     return compose("exec", "-T", "db", "sh", "-c", cmd)[1][-1500:]
+
+
+def dependencies(path=None):
+    """service -> set of services it depends on, read from docker-compose.yml (no hand-written graph)."""
+    deps, svc, in_dep = {}, None, False
+    for raw in (path or ROOT / "docker-compose.yml").read_text(encoding="utf-8-sig").splitlines():
+        line = raw.split("#")[0].rstrip()
+        if not line.strip():
+            continue
+        indent = len(line) - len(line.lstrip())
+        text = line.strip()
+        if indent == 0:
+            svc, in_dep = None, False
+        elif indent == 2 and text.endswith(":"):
+            svc, in_dep = text[:-1], False
+        elif indent == 4 and svc:
+            in_dep = text == "depends_on:"
+        elif in_dep and indent >= 6:
+            if text.startswith("- "):
+                deps.setdefault(svc, set()).add(text[2:].strip())
+            elif indent == 6 and text.endswith(":"):
+                deps.setdefault(svc, set()).add(text[:-1])
+    return deps

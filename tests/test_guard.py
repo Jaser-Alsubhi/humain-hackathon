@@ -1,4 +1,4 @@
-﻿from recovery.agent import Guard, redact
+from recovery.agent import Guard, redact
 
 
 def make(**kw):
@@ -107,3 +107,50 @@ def test_hint_seconds_parses_the_server_message():
     assert abs(_hint_seconds(E("Please try again in 16m6.384s.")) - 966.384) < 0.01
     assert _hint_seconds(E("try again in 2m25.584s")) > 140
     assert _hint_seconds(E("nothing to see here")) is None
+
+
+def settle_guard(ready_after):
+    clock = {"t": 0.0}
+    calls = []
+
+    def restart_service(service):
+        calls.append(service)
+        return "ok"
+
+    def wait(seconds):
+        if clock["t"] >= ready_after:
+            return True
+        clock["t"] += seconds
+        return clock["t"] >= ready_after
+
+    g = Guard({"restart_service": restart_service}, {"restart_service"}, depends={"backend": {"db"}, "frontend": {"backend"}},
+              settle=12, wait=wait, clock=lambda: clock["t"])
+    return g, calls, clock
+
+
+def test_settle_blocks_a_dependent_when_the_site_recovers_by_itself():
+    g, calls, clock = settle_guard(ready_after=5)
+    g.dispatch("restart_service", {"service": "db"})
+    clock["t"] = 1
+    out, blocked = g.dispatch("restart_service", {"service": "backend"})
+    assert blocked and "not needed" in out and calls == ["db"]
+
+
+def test_settle_allows_the_dependent_if_the_site_stays_down():
+    g, calls, clock = settle_guard(ready_after=1000)
+    g.dispatch("restart_service", {"service": "db"})
+    clock["t"] = 1
+    out, blocked = g.dispatch("restart_service", {"service": "backend"})
+    assert not blocked and calls == ["db", "backend"]
+
+
+def test_settle_ignores_services_that_do_not_depend_on_the_one_just_changed():
+    g, calls, clock = settle_guard(ready_after=5)
+    g.dispatch("restart_service", {"service": "db"})
+    out, blocked = g.dispatch("restart_service", {"service": "frontend"})
+    assert not blocked and calls == ["db", "frontend"]
+
+
+def test_dependencies_are_read_from_the_compose_file():
+    from recovery import ops
+    assert ops.dependencies() == {"backend": {"db"}, "frontend": {"backend"}}

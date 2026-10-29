@@ -107,7 +107,8 @@ def _compact(msgs, keep=4):
 class Guard:
     """Only registered tools run, with budgets, optional dry-run and redacted output."""
 
-    def __init__(self, registry, actions, max_steps=12, max_actions=4, dry_run=False, reserve=0, always=()):
+    def __init__(self, registry, actions, max_steps=12, max_actions=4, dry_run=False, reserve=0, always=(),
+                 depends=None, settle=12, wait=None, clock=time.time):
         self.registry = registry
         self.actions = actions
         self.max_steps = max_steps
@@ -115,8 +116,34 @@ class Guard:
         self.dry_run = dry_run
         self.reserve = reserve
         self.always = set(always)
+        self.depends = depends or {}
+        self.settle = settle
+        self.wait = wait
+        self.clock = clock
+        self.touched = {}
         self.steps = 0
         self.action_count = 0
+
+    @staticmethod
+    def _target(name, args):
+        return (args or {}).get("service") or ("backend" if name == "rollback_config" else None)
+
+    def _hold(self, name, args):
+        """Settle rule: do not touch a service while something it depends on was changed moments ago and
+        the site may simply be catching up. Wait out the window; if the site turns ready, the action is not needed."""
+        target = self._target(name, args)
+        recent = [d for d in self.depends.get(target, ()) if self.clock() - self.touched.get(d, -1e9) < self.settle]
+        if not recent:
+            return None
+        dep = recent[0]
+        end = self.touched[dep] + self.settle
+        while True:
+            left = end - self.clock()
+            if self.wait(max(1, min(15, left))):
+                return ("blocked: %s was changed %ds ago and the site is now ready, so touching %s is not needed."
+                        % (dep, self.clock() - self.touched[dep], target))
+            if self.clock() >= end:
+                return None
 
     def dispatch(self, name, args):
         """Return (result_text, blocked)."""
@@ -130,6 +157,11 @@ class Guard:
         fn = self.registry[name]
         if name in self.actions and self.action_count >= self.max_actions:
             return "blocked: action budget exhausted", True
+        if name in self.actions and self.wait:
+            held = self._hold(name, args)
+            if held:
+                self.steps += 1
+                return held, True
         self.steps += 1
         if name in self.actions:
             self.action_count += 1
@@ -139,6 +171,8 @@ class Guard:
         clean = {k: v for k, v in (args or {}).items() if k in allowed}
         try:
             out = fn(**clean)
+            if name in self.actions:
+                self.touched[self._target(name, args)] = self.clock()
         except Exception as e:
             return "error: %s" % type(e).__name__, False
         text = out if isinstance(out, str) else json.dumps(out)
@@ -211,7 +245,8 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
     STATS["rate_retries"] = 0
     STATS["last_error"] = ""
     STATS["wait_seconds"] = 0.0
-    guard = Guard(REGISTRY, ACT, max_steps, max_actions, dry_run, reserve=2, always={"check_health"})
+    guard = Guard(REGISTRY, ACT, max_steps, max_actions, dry_run, reserve=2, always={"check_health"},
+                  depends=ops.dependencies(), settle=12, wait=ops.wait_ready)
     AUDIT_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     audit = AUDIT_DIR / ("%s_%s.jsonl" % (stamp, scenario))
