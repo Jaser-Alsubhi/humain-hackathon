@@ -1,0 +1,16 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+node_modules/
+data/raw/
+results/cache/
+dev.db
+.idea/
+loadtest/out*
+
+ops/*.override.yml
+
+results/audit/
+
+ops/*.flag

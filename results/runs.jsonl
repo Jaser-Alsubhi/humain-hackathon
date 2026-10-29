@@ -1,0 +1,108 @@
+{"time": "2026-10-28T03:04:50", "name": "majority", "seed": 42, "git": "20447d9", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:04:50", "name": "majority", "seed": 43, "git": "20447d9", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:04:50", "name": "majority", "seed": 44, "git": "20447d9", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:04:50", "name": "logreg", "seed": 42, "git": "20447d9", "config": {}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:04:50", "name": "logreg", "seed": 43, "git": "20447d9", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:04:50", "name": "logreg", "seed": 44, "git": "20447d9", "config": {}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:clean", "seed": 42, "git": "20447d9", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:noise_0.5", "seed": 42, "git": "20447d9", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5546634948954307}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:noise_1.0", "seed": 42, "git": "20447d9", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.4895833333333333, "macro_f1": 0.4771512113617377}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:missing_30pct", "seed": 42, "git": "20447d9", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5601538716292814}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:shift_1std", "seed": 42, "git": "20447d9", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.4903360095153137}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:clean", "seed": 43, "git": "20447d9", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:noise_0.5", "seed": 43, "git": "20447d9", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5744647097355278}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:noise_1.0", "seed": 43, "git": "20447d9", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.53125, "macro_f1": 0.5313131313131313}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:missing_30pct", "seed": 43, "git": "20447d9", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.53125, "macro_f1": 0.5257856567284448}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:shift_1std", "seed": 43, "git": "20447d9", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5520833333333334, "macro_f1": 0.5235296919467962}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:clean", "seed": 44, "git": "20447d9", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:noise_0.5", "seed": 44, "git": "20447d9", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5684843711391153}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:noise_1.0", "seed": 44, "git": "20447d9", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.5, "macro_f1": 0.49609900457358086}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:missing_30pct", "seed": 44, "git": "20447d9", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5741593609974673}}
+{"time": "2026-10-28T03:04:53", "name": "logreg:shift_1std", "seed": 44, "git": "20447d9", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.49903381642512074}}
+{"time": "2026-10-28T03:06:06", "name": "majority", "seed": 42, "git": "74cbc29", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:06:06", "name": "majority", "seed": 43, "git": "74cbc29", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:06:06", "name": "majority", "seed": 44, "git": "74cbc29", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:06:06", "name": "logreg", "seed": 42, "git": "74cbc29", "config": {}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:06:06", "name": "logreg", "seed": 43, "git": "74cbc29", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:06:06", "name": "logreg", "seed": 44, "git": "74cbc29", "config": {}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:clean", "seed": 42, "git": "74cbc29", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:noise_0.5", "seed": 42, "git": "74cbc29", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5546634948954307}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:noise_1.0", "seed": 42, "git": "74cbc29", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.4895833333333333, "macro_f1": 0.4771512113617377}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:missing_30pct", "seed": 42, "git": "74cbc29", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5601538716292814}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:shift_1std", "seed": 42, "git": "74cbc29", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.4903360095153137}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:clean", "seed": 43, "git": "74cbc29", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:noise_0.5", "seed": 43, "git": "74cbc29", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5744647097355278}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:noise_1.0", "seed": 43, "git": "74cbc29", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.53125, "macro_f1": 0.5313131313131313}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:missing_30pct", "seed": 43, "git": "74cbc29", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.53125, "macro_f1": 0.5257856567284448}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:shift_1std", "seed": 43, "git": "74cbc29", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5520833333333334, "macro_f1": 0.5235296919467962}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:clean", "seed": 44, "git": "74cbc29", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:noise_0.5", "seed": 44, "git": "74cbc29", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5684843711391153}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:noise_1.0", "seed": 44, "git": "74cbc29", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.5, "macro_f1": 0.49609900457358086}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:missing_30pct", "seed": 44, "git": "74cbc29", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5741593609974673}}
+{"time": "2026-10-28T03:06:06", "name": "logreg:shift_1std", "seed": 44, "git": "74cbc29", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.49903381642512074}}
+{"time": "2026-10-28T03:07:59", "name": "majority", "seed": 42, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:07:59", "name": "majority", "seed": 43, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:07:59", "name": "majority", "seed": 44, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:07:59", "name": "logreg", "seed": 42, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:07:59", "name": "logreg", "seed": 43, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:07:59", "name": "logreg", "seed": 44, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:full (C=1)", "seed": 42, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:full (C=1)", "seed": 43, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:full (C=1)", "seed": 44, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:drop features 0-4", "seed": 42, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5375164453303172}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:drop features 0-4", "seed": 43, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.5, "macro_f1": 0.4953022875816993}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:drop features 0-4", "seed": 44, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.5421242600208451}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:drop features 5-9", "seed": 42, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.5395801331285202}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:drop features 5-9", "seed": 43, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.5384270469016231}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:drop features 5-9", "seed": 44, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.5833333333333334, "macro_f1": 0.5819924621294484}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:strong regularisation (C=0.01)", "seed": 42, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.647624633431085}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:strong regularisation (C=0.01)", "seed": 43, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6555977229601518}}
+{"time": "2026-10-28T03:07:59", "name": "ablation:strong regularisation (C=0.01)", "seed": 44, "git": "0dd4de0", "config": {}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6237679211469533}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:clean", "seed": 42, "git": "0dd4de0", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:noise_0.5", "seed": 42, "git": "0dd4de0", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5546634948954307}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:noise_1.0", "seed": 42, "git": "0dd4de0", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.4895833333333333, "macro_f1": 0.4771512113617377}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:missing_30pct", "seed": 42, "git": "0dd4de0", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5601538716292814}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:shift_1std", "seed": 42, "git": "0dd4de0", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.4903360095153137}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:clean", "seed": 43, "git": "0dd4de0", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:noise_0.5", "seed": 43, "git": "0dd4de0", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5744647097355278}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:noise_1.0", "seed": 43, "git": "0dd4de0", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.53125, "macro_f1": 0.5313131313131313}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:missing_30pct", "seed": 43, "git": "0dd4de0", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.53125, "macro_f1": 0.5257856567284448}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:shift_1std", "seed": 43, "git": "0dd4de0", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5520833333333334, "macro_f1": 0.5235296919467962}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:clean", "seed": 44, "git": "0dd4de0", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:noise_0.5", "seed": 44, "git": "0dd4de0", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5684843711391153}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:noise_1.0", "seed": 44, "git": "0dd4de0", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.5, "macro_f1": 0.49609900457358086}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:missing_30pct", "seed": 44, "git": "0dd4de0", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5741593609974673}}
+{"time": "2026-10-28T03:07:59", "name": "logreg:shift_1std", "seed": 44, "git": "0dd4de0", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.49903381642512074}}
+{"time": "2026-10-28T03:29:39", "name": "majority", "seed": 42, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:29:39", "name": "majority", "seed": 43, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:29:39", "name": "majority", "seed": 44, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.3333333333333333, "macro_f1": 0.16666666666666666}}
+{"time": "2026-10-28T03:29:39", "name": "logreg", "seed": 42, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:29:39", "name": "logreg", "seed": 43, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:29:39", "name": "logreg", "seed": 44, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:full (C=1)", "seed": 42, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:full (C=1)", "seed": 43, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:full (C=1)", "seed": 44, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:drop features 0-4", "seed": 42, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5375164453303172}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:drop features 0-4", "seed": 43, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.5, "macro_f1": 0.4953022875816993}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:drop features 0-4", "seed": 44, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.5421242600208451}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:drop features 5-9", "seed": 42, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.5395801331285202}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:drop features 5-9", "seed": 43, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.5384270469016231}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:drop features 5-9", "seed": 44, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.5833333333333334, "macro_f1": 0.5819924621294484}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:strong regularisation (C=0.01)", "seed": 42, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.647624633431085}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:strong regularisation (C=0.01)", "seed": 43, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6555977229601518}}
+{"time": "2026-10-28T03:29:39", "name": "ablation:strong regularisation (C=0.01)", "seed": 44, "git": "4a915c6", "config": {}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6237679211469533}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:clean", "seed": 42, "git": "4a915c6", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.6770833333333334, "macro_f1": 0.6699415204678362}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:noise_0.5", "seed": 42, "git": "4a915c6", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5546634948954307}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:noise_1.0", "seed": 42, "git": "4a915c6", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.4895833333333333, "macro_f1": 0.4771512113617377}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:missing_30pct", "seed": 42, "git": "4a915c6", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.5625, "macro_f1": 0.5601538716292814}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:shift_1std", "seed": 42, "git": "4a915c6", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.4903360095153137}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:clean", "seed": 43, "git": "4a915c6", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.65625, "macro_f1": 0.6553581209318914}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:noise_0.5", "seed": 43, "git": "4a915c6", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5744647097355278}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:noise_1.0", "seed": 43, "git": "4a915c6", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.53125, "macro_f1": 0.5313131313131313}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:missing_30pct", "seed": 43, "git": "4a915c6", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.53125, "macro_f1": 0.5257856567284448}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:shift_1std", "seed": 43, "git": "4a915c6", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5520833333333334, "macro_f1": 0.5235296919467962}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:clean", "seed": 44, "git": "4a915c6", "config": {"perturbation": "clean"}, "metrics": {"accuracy": 0.625, "macro_f1": 0.6262626262626263}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:noise_0.5", "seed": 44, "git": "4a915c6", "config": {"perturbation": "noise_0.5"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5684843711391153}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:noise_1.0", "seed": 44, "git": "4a915c6", "config": {"perturbation": "noise_1.0"}, "metrics": {"accuracy": 0.5, "macro_f1": 0.49609900457358086}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:missing_30pct", "seed": 44, "git": "4a915c6", "config": {"perturbation": "missing_30pct"}, "metrics": {"accuracy": 0.5729166666666666, "macro_f1": 0.5741593609974673}}
+{"time": "2026-10-28T03:29:39", "name": "logreg:shift_1std", "seed": 44, "git": "4a915c6", "config": {"perturbation": "shift_1std"}, "metrics": {"accuracy": 0.5416666666666666, "macro_f1": 0.49903381642512074}}

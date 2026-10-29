@@ -1,0 +1,248 @@
+{
+  "seed": 20261030,
+  "dev": [
+    {
+      "faults": [
+        {
+          "p": "db_exhaust",
+          "arg": null
+        },
+        {
+          "p": "cfg_host",
+          "arg": "mysql-primary"
+        }
+      ],
+      "id": "fz-7b7b14"
+    },
+    {
+      "faults": [
+        {
+          "p": "cfg_host",
+          "arg": "database"
+        }
+      ],
+      "id": "fz-148808"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_exhaust",
+          "arg": null
+        }
+      ],
+      "id": "fz-1bd97e"
+    },
+    {
+      "faults": [
+        {
+          "p": "cfg_host",
+          "arg": "mysql-primary"
+        }
+      ],
+      "id": "fz-b20182"
+    },
+    {
+      "faults": [
+        {
+          "p": "cfg_host",
+          "arg": "db-old"
+        }
+      ],
+      "id": "fz-1521a6"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-377c9d"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        }
+      ],
+      "id": "fz-5e3ec5"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_exhaust",
+          "arg": null
+        },
+        {
+          "p": "cfg_host",
+          "arg": "db-old"
+        }
+      ],
+      "id": "fz-eee7b6"
+    }
+  ],
+  "heldout": [
+    {
+      "faults": [
+        {
+          "p": "db_exhaust",
+          "arg": null
+        },
+        {
+          "p": "cfg_password",
+          "arg": "wrongpass"
+        }
+      ],
+      "id": "fz-b56b2d"
+    },
+    {
+      "faults": [
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-e60897"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_exhaust",
+          "arg": null
+        },
+        {
+          "p": "be_stop",
+          "arg": null
+        }
+      ],
+      "id": "fz-ca6865"
+    },
+    {
+      "faults": [
+        {
+          "p": "cfg_password",
+          "arg": "rotated2026"
+        }
+      ],
+      "id": "fz-10ec16"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_pause",
+          "arg": null
+        },
+        {
+          "p": "cfg_password",
+          "arg": "rotated2026"
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-dc3a0d"
+    },
+    {
+      "faults": [
+        {
+          "p": "cfg_host",
+          "arg": "database"
+        },
+        {
+          "p": "be_stop",
+          "arg": null
+        }
+      ],
+      "id": "fz-fef3cc"
+    },
+    {
+      "faults": [
+        {
+          "p": "cfg_dbname",
+          "arg": "hackdb2"
+        },
+        {
+          "p": "be_stop",
+          "arg": null
+        }
+      ],
+      "id": "fz-5521c4"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_pause",
+          "arg": null
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-91e410"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        },
+        {
+          "p": "cfg_password",
+          "arg": "wrongpass"
+        }
+      ],
+      "id": "fz-bb3ac9"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        },
+        {
+          "p": "cfg_dbname",
+          "arg": "hackdb2"
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-0b3410"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        },
+        {
+          "p": "cfg_dbname",
+          "arg": "app"
+        }
+      ],
+      "id": "fz-e911d2"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_pause",
+          "arg": null
+        },
+        {
+          "p": "cfg_password",
+          "arg": "changeme"
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-de4c32"
+    }
+  ],
+  "heldout_sha256": "06d9e72e31e2c224f2ec6105c1c78ef1ec9bd2d9762e754740303dddb1771db0"
+}
