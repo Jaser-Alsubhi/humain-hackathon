@@ -1,5 +1,5 @@
 """Failure scenarios: inject a fault into the real stack, and reset it to a healthy state."""
-from recovery import ops
+from recovery import faults_extra, ops
 
 NAMES = ["db_down", "db_paused", "bad_config", "compound", "injection", "conn_exhaust"]
 
@@ -24,6 +24,8 @@ LIMIT = 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SET GLOBAL max_connections=4"
 
 def correct(name):
     """The actions that genuinely fix a scenario, including fuzzer-generated ones."""
+    if name in faults_extra.EXTRA:
+        return faults_extra.correct(name)
     if name.startswith("fz-"):
         from recovery import fuzz
         return fuzz.correct(fuzz.lookup(name))
@@ -31,6 +33,11 @@ def correct(name):
 
 
 def reset():
+    if faults_extra.FLAG.exists():
+        ops.compose("up", "-d", "--force-recreate", "--no-deps", "db", "backend")
+        faults_extra.FLAG.unlink()
+        if ops.DIRTY.exists():
+            ops.DIRTY.unlink()
     if ops.DIRTY.exists():
         ops.compose("restart", "db")
         ops.DIRTY.unlink()
@@ -69,6 +76,8 @@ def inject(name):
         import time
         time.sleep(3)
         ops.compose("restart", "backend")
+    elif name in faults_extra.EXTRA:
+        faults_extra.inject(name)
     elif name.startswith("fz-"):
         from recovery import fuzz
         fuzz.inject(fuzz.lookup(name))

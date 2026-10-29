@@ -101,7 +101,10 @@ def main():
     methods = arg("--methods", ["naive", "runbook", "agent"])
     names = arg("--scenarios", scenarios.NAMES)
     split = arg("--set", [""])[0]
-    if split:
+    if split == "extra":
+        from recovery import faults_extra
+        names = faults_extra.names()
+    elif split:
         from recovery import fuzz
         names = fuzz.ids(split)
         done = {(r["scenario"], r["method"], r.get("model", "-")) for r in load()}

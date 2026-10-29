@@ -168,3 +168,7 @@ def dependencies(path=None):
             elif indent == 6 and text.endswith(":"):
                 deps.setdefault(svc, set()).add(text[:-1])
     return deps
+
+
+def recreate_service(service):
+    return _bad_service(service) or compose("up", "-d", "--force-recreate", "--no-deps", service)[1][-300:]

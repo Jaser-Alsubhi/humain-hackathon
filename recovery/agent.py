@@ -48,9 +48,12 @@ TOOLS = [
     _tool("start_service", "ACTION. Start a stopped service.", SERVICE, ["service"]),
     _tool("unpause_service", "ACTION. Unpause a paused service.", SERVICE, ["service"]),
     _tool("rollback_config", "ACTION. Restore the last known good configuration and recreate the backend."),
+    _tool("recreate_service", "ACTION. Last resort. Rebuild one service's container from its compose definition. "
+          "Undoes changes made to the running container (a lost network, a changed resource limit). Data volumes are kept. "
+          "Try restart_service first when the container itself looks intact.", SERVICE, ["service"]),
 ]
 
-ACT = {"restart_service", "start_service", "unpause_service", "rollback_config"}
+ACT = {"restart_service", "start_service", "unpause_service", "rollback_config", "recreate_service"}
 
 
 def _check_health(wait_seconds=0):
@@ -70,6 +73,7 @@ REGISTRY = {
     "start_service": ops.start_service,
     "unpause_service": ops.unpause_service,
     "rollback_config": ops.rollback_config,
+    "recreate_service": ops.recreate_service,
 }
 
 _REDACTIONS = [

@@ -154,3 +154,18 @@ def test_settle_ignores_services_that_do_not_depend_on_the_one_just_changed():
 def test_dependencies_are_read_from_the_compose_file():
     from recovery import ops
     assert ops.dependencies() == {"backend": {"db"}, "frontend": {"backend"}}
+
+
+def test_extra_faults_use_real_tools_and_services():
+    from recovery import agent, faults_extra, ops
+    assert len(faults_extra.names()) == 6
+    for name in faults_extra.names():
+        for action in faults_extra.EXTRA[name][1]:
+            tool, _, service = action.partition(":")
+            assert tool in agent.ACT and tool in agent.REGISTRY and service in ops.SERVICES
+
+
+def test_scenarios_know_the_extra_faults():
+    from recovery import faults_extra, scenarios
+    for name in faults_extra.names():
+        assert scenarios.correct(name) == set(faults_extra.EXTRA[name][1])
