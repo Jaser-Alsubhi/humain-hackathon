@@ -75,7 +75,21 @@ def check_health():
 
 
 def service_status():
-    return compose("ps", "--all", "--format", "{{.Service}}: {{.State}} ({{.Status}})")[1]
+    base = compose("ps", "--all", "--format", "{{.Service}}: {{.State}} ({{.Status}})")[1]
+    extra = []
+    for svc in ("backend", "db", "frontend"):
+        try:
+            cid = compose("ps", "-q", svc)[1].strip()
+            if not cid:
+                continue
+            rows = sh(["docker", "top", cid, "-eo", "pid,stat,comm"])[1].strip().splitlines()[1:]
+            states = "; ".join(" ".join(r.split()) for r in rows[:6])
+            extra.append("%s processes (pid stat command): %s" % (svc, states))
+        except Exception:
+            pass
+    if extra:
+        extra.insert(0, "process STAT: S/R = normal, T = stopped (frozen), D = blocked on I/O, Z = zombie")
+    return base + ("\n" + "\n".join(extra) if extra else "")
 
 
 def get_logs(service, tail=25):
