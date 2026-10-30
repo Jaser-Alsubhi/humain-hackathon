@@ -85,5 +85,54 @@ On `hung_backend` every run took one action, the restart of the backend, with ne
 | Fixed runbook | 0/3 | takes no action |
 | Mend agent (gpt-oss-120b) | 3/3 | 2 actions each, 0 wrong; 21,632, 18,627 and 21,510 tokens; 15 s, 17 s and 127 s (the slow run is most likely provider rate limiting, not checked) |
 
-**Limits.** This is a development scenario designed knowing the fix, not an unbiased test. The ledger lives in the same database, so it is a simulated replica, not a separate system. The drift starts at a set point rather than appearing gradually in time. The alert for this scenario names the ledger, which narrows the search. Either repair order ends clean, so the check is on the final state. Three runs show stability, not rates. Two earlier versions of this scenario passed 3 of 3 too (a trigger adding 1 cent to payments, and a trigger whose error grew with the order id). Both were replaced so that the bug acts on rows that were already correct, which matches the brief, and their numbers are not used here.
+**Limits.** This is a development scenario designed knowing the fix, not an unbiased test. The ledger lives in the same database, so it is a simulated replica, not a separate system. The drift starts at a set point rather than appearing gradually in time. The alert used in the evaluation names the ledger, which narrows the search. A single run through the monitor, whose alert names no cause, recovered it as well (section #6), although that alert still names the failing check (`ledger_mismatch`). Either repair order ends clean, so the check is on the final state. Three runs show stability, not rates. Two earlier versions of this scenario passed 3 of 3 too (a trigger adding 1 cent to payments, and a trigger whose error grew with the order id). Both were replaced so that the bug acts on rows that were already correct, which matches the brief, and their numbers are not used here.
+
+## #2 A queue that loses messages under load
+
+**Scenario.** The backend has a message queue: `POST /queue/messages` writes each message to an append-only journal first, then offers it to a bounded queue (a table), and a worker thread drains the queue. What happens when the queue is full is configuration. A deploy changes three settings: the overflow policy goes from reject (answer 429) to drop (answer 202 and discard), the depth from 1000 to 10, and the worker slows to 2 seconds a message. Then a spike of 40 messages arrives, after 20 messages sent under good settings. Every message is accepted and journaled, `/ready` stays 200, orders and payments are untouched, and in the oracle run 26 of the 60 messages were lost (the exact number varies with timing).
+
+**How it is detected.** `check_invariants` compares the queue journal with what is still queued and what the worker processed (`queue_lost`). `queue_status` shows the counts, the queue settings in the active configuration and a verdict ("26 messages are still lost"). `config_changes` shows the settings that changed.
+
+**Correct fix.** Roll back the configuration, then replay the lost messages from the journal (`replay_queue`). Either alone does not fix it. Replaying while the bad settings are active loses the messages again.
+
+**Zero-token oracle: PASS.** The site stays ready; all 60 messages are journaled and 26 are lost; the naive restart and the runbook do not fix it; rollback alone leaves them lost; replay before rollback loses them again; rollback then replay fixes it. The older scenarios still pass the oracle after the queue was added.
+
+| Method | Recovered | Notes |
+|---|---|---|
+| Naive restart | 0/3 | 1 wrong action in each run |
+| Fixed runbook | 0/3 | rolls back the config, which does not bring the messages back |
+| Mend agent, first version (gpt-oss-120b) | 2/3 | 0 wrong actions |
+| Mend agent, after one change (gpt-oss-120b) | 5/5 | 2 actions each (rollback, then replay), 0 wrong; 65 to 127 s; 17,355 to 29,811 tokens |
+
+**What went wrong in the first version, all three runs.** Run 1 replayed the messages first, while the bad settings were still active, so they were dropped again. It then rolled back the config and stopped without replaying a second time. Run 2 made the same first mistake, noticed, and replayed again after the rollback. Run 3 rolled back first and then replayed. So the agent had the evidence (the settings were visible in `config_changes` and `queue_status`) and sometimes acted in the wrong order.
+
+**Change made after seeing this.** Three general changes, none naming this scenario: SYSTEM rule 8 now says to replay only after whatever lost the data is fixed, because replaying into a destination that still has the fault loses the data again; the `replay_queue` description says the messages are lost again if the current settings are what lost them; and `queue_status` ends with a plain verdict. After the change all five runs rolled back first and replayed second. The payments scenario, which also uses replay, passed 3 of 3 afterwards. Tokens per payments run rose from about 15,000 to about 25,000. I did not check why, and my guess is the two extra tool descriptions sent on every step.
+
+**Limits.**
+- A development scenario, designed knowing the fix, and the prompt change was made after seeing a failure. Not an unbiased test.
+- The queue is a table in the same database and the worker is a thread in the backend, so it is a small simulation of a message queue, not a broker such as RabbitMQ or Kafka.
+- The agent runs at temperature 0, so five runs show stability, not a rate.
+- Detection relies on the journal. Messages that never reach the journal cannot be found.
+- The effect of the rule 8 change was measured only on the queue and payments scenarios.
+
+## #6 Unattended operation: the monitor and the live button
+
+**What it is.** `recovery.watch` polls `/ready` and the data checks every 5 seconds. After two failed checks in a row it starts the agent. The alert it passes is built only from measurements ("the readiness check is failing (HTTP 503)", "data checks fail (ledger_mismatch=35)"), so it names the failing check but no cause. Escalation ends the incident and the monitor stops after two attempts. `recovery.break_it` injects a fault without telling the monitor what it was. A small server on the VM runs the same loop for the public Break it button.
+
+**What was run.** On the laptop, the monitor recovered `db_down` and `sync_corruption` unattended. On the public project site, each of five faults was run once through the button on the real VM, and all five recovered and were verified:
+
+| Fault | Time | Steps | Actions | Tokens |
+|---|---|---|---|---|
+| Database stops | 17 s | 3 | 1 | 6,722 |
+| Bad configuration is deployed | 74 s | 5 | 1 | 12,579 |
+| Backend freezes | 36 s | 3 | 1 | 6,887 |
+| Sync job corrupts data | 78 s | 9 | 2 | 21,647 |
+| Payments silently lost | 137 s | 10 | 2 | 23,305 |
+
+**Limits.**
+- One live run per fault, so this shows the chain works end to end, not a rate.
+- The queue fault was added to the live list after these runs.
+- The monitor has not been run on the frozen backend or the unfixable fault from the laptop, and the live list leaves out the unfixable fault.
+- Detection of silent faults depends on the journal and the data checks, which only cover orders, payments, the ledger and the queue. A silent fault elsewhere would not be seen.
+- The live button is limited to 5 runs per visitor per hour and 25 per day, one at a time, with a kill switch. The live agent uses a shared provider key and a small shared VM.
 
