@@ -31,6 +31,8 @@ Misk x HUMAIN Future AI Builders Hackathon, Challenge 1. Solo entry. Numbers com
 | Hangs | 1/4 | 0/4 | **8/9** | 0 | 14,204 |
 <!-- RESULTS:END -->
 
+Table notes: agent columns pool every saved agent run, including a few early runs on the smaller gpt-oss-20b. The Hangs cell 8/9 includes one failed `hung_exhaust` run on gpt-oss-20b. On gpt-oss-120b, the model behind every other claim, hangs are 8/8. Those 8 are development results, not a blind test.
+
 **Held-out result, evaluated once on the frozen final code (commit `2f73884`, 12 generated fault combinations, one run each):** agent 10/12, fixed runbook 10/12, naive restart 1/12. Wrong actions: agent 6 (in 4 runs), runbook 0, naive 12. The agent missed `fz-b56b2d` (database connections exhausted plus a wrong password) and `fz-de4c32` (paused containers plus a changed password). The runbook missed `fz-b56b2d` and `fz-ca6865`. On generic infrastructure faults the agent therefore matches a hand-written runbook but costs more (24,189 tokens and 89 s on average) and acts wrongly more often. Its advantage is on the problems a runbook cannot handle. Per-fault detail is in `docs/EVIDENCE.md`.
 
 Baselines first, always. The naive restart fixes almost nothing because most faults are not "restart the backend". The scripted runbook solves the outages it has rules for (15 of 18 core runs) and nothing in the silent-data, unfixable or hang families, because no container is down and no config changed.

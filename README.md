@@ -19,6 +19,7 @@ Every run saved in the results file is counted, failures included. The file keep
 | Hangs | 1/4 | 0/4 | **8/9** | 0 | 14,204 |
 <!-- RESULTS:END -->
 
+- Table notes: agent columns pool every saved agent run, including a few early runs on the smaller gpt-oss-20b. The Hangs cell 8/9 includes one failed `hung_exhaust` run on gpt-oss-20b. On gpt-oss-120b, the model behind every other claim, hangs are 8/8. Those 8 are development results, not a blind test.
 - Naive restart: restart the backend and hope. Fixed runbook: scripted rules (start stopped containers, unpause paused ones, roll back a changed config).
 - Agent model: gpt-oss-120b on Cerebras (an earlier phase used the same model on Groq). A smaller model, gpt-oss-20b, was tried on some faults and is counted separately in the results file.
 - Held-out result (12 unseen generated fault combinations, evaluated once on the frozen code `2f73884`): agent 10/12, fixed runbook 10/12, naive restart 1/12. The agent made 6 wrong actions in 4 runs and the runbook made none. Details are in `docs/REPORT.md` and `docs/EVIDENCE.md`.
@@ -109,6 +110,7 @@ Built during the event: the orders pipeline and intake journal, the silent data 
 - The ledger in the sync scenario lives in the same database, so it is a simulated replica.
 - The Break it button runs the real agent on a small shared server, so it is limited to 3 runs per visitor per hour and 25 per day, one at a time, with a kill switch. Each of its five faults was run once live, which shows the chain works, not a rate. The recorded replay is always available.
 - The queue is a table and a worker thread in the same database, not a message broker.
+- In the one monitored run of the unfixable fault, the first agent attempt restarted the backend twice and ended without a ticket. The monitor's second attempt escalated correctly, so the full incident ended with a ticket, but not on the first pass.
 - The monitor detects silent faults only through the data checks (orders, payments, the ledger and the queue). A silent fault elsewhere would not be seen.
 - Latency of 80 to 200 seconds on some runs is mostly provider rate limiting (5 requests a minute), not compute.
 
