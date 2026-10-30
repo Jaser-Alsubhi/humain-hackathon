@@ -16,14 +16,21 @@ ol.steps li.info{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-siz
 .btn:disabled{opacity:.55;cursor:default}
 .hint{padding:0 16px 12px;color:var(--muted);font-size:14px}
 .tabs{justify-content:center}
-footer.foot{display:block;padding:0 0 28px;border-top:1px solid var(--line);margin-top:8px;font-size:14.5px}
-.foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:32px;padding:32px 0 24px}
-.foot-grid h4{margin:0 0 10px;font-size:14.5px;color:var(--ink)}
-.foot-grid p{margin:0;max-width:44ch;line-height:1.5}
-.foot-grid a{display:block;margin:0 0 7px;color:var(--muted);text-decoration:none}
-.foot-grid a:hover{color:var(--ink);text-decoration:underline}
-.foot-note{padding-top:18px;border-top:1px solid var(--line);text-align:center;font-size:13.5px}
-@media (max-width:700px){.foot-grid{grid-template-columns:1fr;gap:22px}}
+footer.foot{display:block;margin-top:64px;padding:0;border-top:1px solid var(--line);font-size:14.5px;color:var(--muted)}
+.foot-top{display:flex;justify-content:space-between;gap:48px;padding:40px 0 36px;flex-wrap:wrap}
+.foot-brand{max-width:340px}
+.foot-brand .logo{font-size:20px;color:var(--ink);margin-bottom:12px}
+.foot-brand p{margin:0;line-height:1.55}
+.foot-cols{display:grid;grid-template-columns:repeat(3,minmax(130px,auto));gap:56px}
+.foot-cols h4{margin:0 0 14px;font-size:13.5px;font-weight:600;color:var(--ink)}
+.foot-cols a,.foot-cols span{display:block;margin:0 0 10px;color:var(--muted);text-decoration:none;line-height:1.3}
+.foot-cols a:hover{color:var(--ink)}
+.foot-cols a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:4px}
+.foot-cols span.ink{color:var(--ink)}
+.foot-cols em{font-style:normal;font-size:12px;border:1px solid var(--line);border-radius:99px;padding:1px 8px;margin-left:6px;white-space:nowrap}
+.foot-bar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 0 34px;border-top:1px solid var(--line);font-size:13.5px}
+@media (max-width:760px){.foot-cols{grid-template-columns:1fr 1fr;gap:28px 24px}.foot-top{gap:32px}}
+@media (max-width:420px){.foot-cols{grid-template-columns:1fr}}
 /*END-LIVE-CSS*/
 """
 
@@ -124,15 +131,20 @@ JS = r"""/*LIVE-JS*/
 OLD_FOOT = ('<footer><span>Built for the Misk x HUMAIN Future AI Builders Hackathon, Challenge 1.</span>'
             '<span>Jaser Alsubhi, solo participant.</span><span>Demo video, GitHub and slides: added at submission.</span></footer>')
 EMAIL = "JaserAlsubhi0@gmail.com"
-FOOT = ("<!--LIVE-FOOT--><footer class=\"foot\"><div class=\"foot-grid\">"
-        "<div><h4>Mend</h4><p>An agent that finds, fixes and verifies failures in a running system, including silent ones, "
-        "and hands over with a ticket when it cannot fix the cause.</p></div>"
-        "<div><h4>Project</h4><a href=\"https://github.com/Jaser-Alsubhi/humain-hackathon\">Code on GitHub</a>"
-        "<a href=\"#tabs\">Results and limits</a><span style=\"color:var(--muted)\">Demo video and slides: added at submission</span></div>"
-        "<div><h4>Contact</h4><span style=\"display:block;color:var(--ink);margin-bottom:7px\">Jaser Alsubhi</span>"
-        "<a href=\"mailto:" + EMAIL + "\">" + EMAIL + "</a>"
-        "</div></div>"
-        "<div class=\"foot-note\">Built solo for the Misk x HUMAIN Future AI Builders Hackathon, Challenge 1, October 2026.</div>"
+FOOT = ("<!--LIVE-FOOT--><footer class=\"foot\"><div class=\"foot-top\">"
+        "<div class=\"foot-brand\"><div class=\"logo\"><i><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#fff\" stroke-width=\"3\" "
+        "stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 18V6l8 9 8-9v12\"/></svg></i>Mend</div>"
+        "<p>Finds, fixes and verifies failures in a running system, including silent ones, and hands over with a ticket "
+        "when it cannot fix the cause.</p></div>"
+        "<nav class=\"foot-cols\" aria-label=\"Footer\">"
+        "<div><h4>Explore</h4><a href=\"#tabs\" data-open=\"results\">Results</a><a href=\"#tabs\" data-open=\"how\">How it works</a>"
+        "<a href=\"#tabs\" data-open=\"limits\">Limits</a><a href=\"#tabs\" data-open=\"faq\">Questions</a></div>"
+        "<div><h4>Project</h4><a href=\"https://github.com/Jaser-Alsubhi/humain-hackathon\">GitHub</a>"
+        "<span>Demo video<em>at submission</em></span><span>Slides<em>at submission</em></span></div>"
+        "<div><h4>Contact</h4><span class=\"ink\">Jaser Alsubhi</span><a href=\"mailto:" + EMAIL + "\">" + EMAIL + "</a></div>"
+        "</nav></div>"
+        "<div class=\"foot-bar\"><span>&copy; 2026 Jaser Alsubhi</span>"
+        "<span>Built solo for the Misk x HUMAIN Future AI Builders Hackathon, Challenge 1</span></div>"
         "</footer><!--END-LIVE-FOOT-->")
 
 
