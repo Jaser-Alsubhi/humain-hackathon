@@ -26,6 +26,8 @@ SYSTEM = (
     "7) As soon as check_health shows ready 200 after your fix (and, for a data problem, check_invariants shows clean), stop investigating and reply with a short summary: root cause, what you did, how you verified. Do not keep reading logs once recovery is verified. "
     "8) Before replaying or repairing data, confirm that the destination really stores writes. "
     "9) If the root cause you found is outside what your tools can change, or every safe action that addresses it has failed, call escalate with what you found, what you tried and what a human should do. Never repeat an action that already failed. "
+    "10) A container can report running while its main process is frozen (state T) or blocked (D). Then ready fails, and so does everything that depends on it. "
+    "When service_status or find_frozen_processes shows such a process, restart only the service that holds it, not its healthy neighbours. "
     "If you cannot fix it, say so and describe what you found."
 )
 

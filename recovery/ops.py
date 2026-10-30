@@ -74,6 +74,24 @@ def check_health():
     return {"health": http("/health"), "ready": http("/ready")}
 
 
+def frozen_processes():
+    """Processes inside the containers that are stopped (T), blocked (D) or zombies (Z), as (service, pid, command, state)."""
+    found = []
+    for svc in SERVICES:
+        try:
+            cid = compose("ps", "-q", svc)[1].strip()
+            if not cid:
+                continue
+            rows = sh(["docker", "top", cid, "-eo", "pid,stat,comm"])[1].strip().splitlines()[1:]
+        except Exception:
+            continue
+        for r in rows:
+            parts = r.split(None, 2)
+            if len(parts) == 3 and parts[1][:1] in ("T", "D", "Z"):
+                found.append((svc, parts[0], parts[2], parts[1]))
+    return found
+
+
 def service_status():
     base = compose("ps", "--all", "--format", "{{.Service}}: {{.State}} ({{.Status}})")[1]
     extra = []
@@ -89,26 +107,18 @@ def service_status():
             pass
     if extra:
         extra.insert(0, "process STAT: S/R = normal, T = stopped (frozen), D = blocked on I/O, Z = zombie")
-    return base + ("\n" + "\n".join(extra) if extra else "")
+    warn = ["WARNING: %s has a frozen process, pid %s (%s) in state %s. The container reports running, but this process "
+            "cannot answer requests." % f for f in frozen_processes()]
+    return "\n".join(warn + [base] + extra)
 
 
 def find_frozen_processes():
     """List processes inside the containers that are stopped (T), blocked (D) or zombies (Z)."""
-    found = []
-    for svc in SERVICES:
-        try:
-            cid = compose("ps", "-q", svc)[1].strip()
-            if not cid:
-                continue
-            rows = sh(["docker", "top", cid, "-eo", "pid,stat,comm"])[1].strip().splitlines()[1:]
-        except Exception:
-            continue
-        for r in rows:
-            parts = r.split(None, 2)
-            if len(parts) == 3 and parts[1][:1] in ("T", "D", "Z"):
-                found.append("%s: pid %s (%s) is in state %s" % (svc, parts[0], parts[2], parts[1]))
+    found = ["%s: pid %s (%s) is in state %s" % f for f in frozen_processes()]
     if found:
-        return "stopped, blocked or zombie processes found (T = stopped, D = blocked on I/O, Z = zombie):\n" + "\n".join(found)
+        return ("stopped, blocked or zombie processes found (T = stopped, D = blocked on I/O, Z = zombie). "
+                "A container can report running while its process is frozen. Restart only the service that holds it:\n"
+                + "\n".join(found))
     return "no stopped, blocked or zombie processes found"
 
 

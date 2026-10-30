@@ -1828,30 +1828,6 @@
   {
     "recovered": false,
     "actions": 1,
-    "seconds": 28.997727870941162,
-    "sequence": [
-      "restart_service:backend"
-    ],
-    "wrong_actions": 0,
-    "scenario": "hung_exhaust",
-    "method": "naive",
-    "model": "-",
-    "run": 0
-  },
-  {
-    "recovered": false,
-    "actions": 0,
-    "seconds": 46.54551553726196,
-    "sequence": [],
-    "wrong_actions": 0,
-    "scenario": "hung_exhaust",
-    "method": "runbook",
-    "model": "-",
-    "run": 0
-  },
-  {
-    "recovered": false,
-    "actions": 1,
     "seconds": 24.752882957458496,
     "sequence": [
       "restart_service:backend"
@@ -2489,111 +2465,6 @@
     "run": 0
   },
   {
-    "recovered": true,
-    "actions": 2,
-    "tokens": 32493,
-    "steps": 12,
-    "verified": false,
-    "bad_json": 0,
-    "sequence": [
-      "service_status",
-      "check_health",
-      "get_logs:frontend",
-      "get_logs:backend",
-      "get_logs:backend",
-      "service_status",
-      "get_metrics",
-      "restart_service:backend",
-      "check_health",
-      "get_logs:backend",
-      "restart_service:db",
-      "check_health"
-    ],
-    "calls": [
-      "service_status",
-      "check_health",
-      "get_logs:frontend",
-      "get_logs:backend",
-      "get_logs:backend",
-      "service_status",
-      "get_metrics",
-      "restart_service:backend",
-      "check_health",
-      "get_logs:backend",
-      "db_status",
-      "restart_service:db",
-      "check_health"
-    ],
-    "llm_seconds": 131,
-    "rate_retries": 2,
-    "nudges": 0,
-    "wait_seconds": 110,
-    "models": {
-      "gpt-oss-120b": 32493
-    },
-    "escalated_at": null,
-    "seconds": 183.27068042755127,
-    "handed_off": false,
-    "ticket": null,
-    "wrong_actions": 0,
-    "scenario": "hung_exhaust",
-    "method": "agent",
-    "model": "gpt-oss-120b",
-    "run": 0
-  },
-  {
-    "recovered": true,
-    "actions": 3,
-    "tokens": 31353,
-    "steps": 12,
-    "verified": true,
-    "bad_json": 0,
-    "sequence": [
-      "service_status",
-      "check_health",
-      "get_logs:frontend",
-      "get_logs:backend",
-      "check_health",
-      "get_logs:frontend",
-      "get_metrics",
-      "restart_service:frontend",
-      "check_health",
-      "recreate_service:frontend",
-      "restart_service:backend",
-      "check_health"
-    ],
-    "calls": [
-      "service_status",
-      "check_health",
-      "get_logs:frontend",
-      "get_logs:backend",
-      "check_health",
-      "get_logs:frontend",
-      "get_metrics",
-      "restart_service:frontend",
-      "check_health",
-      "recreate_service:frontend",
-      "restart_service:backend",
-      "check_health"
-    ],
-    "llm_seconds": 74,
-    "rate_retries": 1,
-    "nudges": 0,
-    "wait_seconds": 58,
-    "models": {
-      "gpt-oss-120b": 31353
-    },
-    "escalated_at": null,
-    "seconds": 79.72601294517517,
-    "handed_off": false,
-    "ticket": null,
-    "wrong_actions": 2,
-    "scenario": "hung_backend",
-    "method": "agent",
-    "model": "gpt-oss-120b",
-    "run": 0
-  },
-  {
     "recovered": false,
     "actions": 1,
     "seconds": 3.601262092590332,
@@ -2799,6 +2670,378 @@
     "ticket": null,
     "wrong_actions": 0,
     "scenario": "sync_corruption",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 2
+  },
+  {
+    "recovered": true,
+    "actions": 1,
+    "tokens": 6814,
+    "steps": 3,
+    "verified": true,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "calls": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "llm_seconds": 2,
+    "rate_retries": 0,
+    "nudges": 0,
+    "wait_seconds": 0,
+    "models": {
+      "gpt-oss-120b": 6814
+    },
+    "escalated_at": null,
+    "seconds": 10.24342656135559,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "hung_backend",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 0
+  },
+  {
+    "recovered": true,
+    "actions": 1,
+    "tokens": 6830,
+    "steps": 3,
+    "verified": true,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "calls": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "llm_seconds": 2,
+    "rate_retries": 0,
+    "nudges": 0,
+    "wait_seconds": 0,
+    "models": {
+      "gpt-oss-120b": 6830
+    },
+    "escalated_at": null,
+    "seconds": 9.99161696434021,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "hung_backend",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 1
+  },
+  {
+    "recovered": true,
+    "actions": 1,
+    "tokens": 6821,
+    "steps": 3,
+    "verified": true,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "calls": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "llm_seconds": 55,
+    "rate_retries": 1,
+    "nudges": 0,
+    "wait_seconds": 52,
+    "models": {
+      "gpt-oss-120b": 6821
+    },
+    "escalated_at": null,
+    "seconds": 9.847874641418457,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "hung_backend",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 2
+  },
+  {
+    "recovered": true,
+    "actions": 1,
+    "tokens": 6819,
+    "steps": 3,
+    "verified": true,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "calls": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "llm_seconds": 4,
+    "rate_retries": 0,
+    "nudges": 0,
+    "wait_seconds": 0,
+    "models": {
+      "gpt-oss-120b": 6819
+    },
+    "escalated_at": null,
+    "seconds": 8.689239978790283,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "hung_backend",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 3
+  },
+  {
+    "recovered": true,
+    "actions": 1,
+    "tokens": 6820,
+    "steps": 3,
+    "verified": true,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "calls": [
+      "service_status",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "llm_seconds": 3,
+    "rate_retries": 0,
+    "nudges": 0,
+    "wait_seconds": 0,
+    "models": {
+      "gpt-oss-120b": 6820
+    },
+    "escalated_at": null,
+    "seconds": 10.650014638900757,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "hung_backend",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 4
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 28.405218839645386,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
+    "method": "naive",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 27.761791467666626,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
+    "method": "naive",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 27.86434578895569,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
+    "method": "naive",
+    "model": "-",
+    "run": 2
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 48.738457918167114,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
+    "method": "runbook",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 48.706395626068115,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
+    "method": "runbook",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 48.50565457344055,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
+    "method": "runbook",
+    "model": "-",
+    "run": 2
+  },
+  {
+    "recovered": true,
+    "actions": 2,
+    "tokens": 21621,
+    "steps": 9,
+    "verified": true,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "restart_service:backend",
+      "check_health",
+      "get_logs:backend",
+      "db_status",
+      "find_frozen_processes",
+      "restart_service:db",
+      "check_health",
+      "check_invariants"
+    ],
+    "calls": [
+      "service_status",
+      "restart_service:backend",
+      "check_health",
+      "get_logs:backend",
+      "db_status",
+      "find_frozen_processes",
+      "restart_service:db",
+      "check_health",
+      "check_invariants"
+    ],
+    "llm_seconds": 59,
+    "rate_retries": 1,
+    "nudges": 0,
+    "wait_seconds": 52,
+    "models": {
+      "gpt-oss-120b": 21621
+    },
+    "escalated_at": null,
+    "seconds": 41.014365911483765,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 0
+  },
+  {
+    "recovered": true,
+    "actions": 2,
+    "tokens": 16845,
+    "steps": 7,
+    "verified": true,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "restart_service:backend",
+      "check_health",
+      "get_logs:backend",
+      "db_status",
+      "restart_service:db",
+      "check_health"
+    ],
+    "calls": [
+      "service_status",
+      "restart_service:backend",
+      "check_health",
+      "get_logs:backend",
+      "db_status",
+      "restart_service:db",
+      "check_health"
+    ],
+    "llm_seconds": 61,
+    "rate_retries": 1,
+    "nudges": 0,
+    "wait_seconds": 53,
+    "models": {
+      "gpt-oss-120b": 16845
+    },
+    "escalated_at": null,
+    "seconds": 32.57096719741821,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 1
+  },
+  {
+    "recovered": true,
+    "actions": 2,
+    "tokens": 16722,
+    "steps": 7,
+    "verified": true,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "restart_service:backend",
+      "check_health",
+      "get_logs:backend",
+      "db_status",
+      "restart_service:db",
+      "check_health"
+    ],
+    "calls": [
+      "service_status",
+      "restart_service:backend",
+      "check_health",
+      "get_logs:backend",
+      "db_status",
+      "restart_service:db",
+      "check_health"
+    ],
+    "llm_seconds": 5,
+    "rate_retries": 0,
+    "nudges": 0,
+    "wait_seconds": 0,
+    "models": {
+      "gpt-oss-120b": 16722
+    },
+    "escalated_at": null,
+    "seconds": 47.10304665565491,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
     "method": "agent",
     "model": "gpt-oss-120b",
     "run": 2
