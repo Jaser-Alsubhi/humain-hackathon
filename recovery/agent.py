@@ -24,7 +24,7 @@ SYSTEM = (
     "5) Your steps and actions are limited. The steps left are shown after every tool result, and the last 2 steps are reserved for actions and check_health, so act before you run out. "
     "6) More than one thing can be broken at once. Start with service_status. Fix a stopped, exited or paused dependency (the database) before anything downstream, and after every fix run check_health again: if ready is still not 200, keep investigating. "
     "7) As soon as check_health shows ready 200 after your fix (and, for a data problem, check_invariants shows clean), stop investigating and reply with a short summary: root cause, what you did, how you verified. Do not keep reading logs once recovery is verified. "
-    "8) Before replaying or repairing data, confirm that the destination really stores writes. "
+    "8) Before replaying or repairing data, confirm that the destination really stores writes and that whatever lost the data is already fixed: replaying into a destination that still has the fault loses the data again. "
     "9) If the root cause you found is outside what your tools can change, or every safe action that addresses it has failed, call escalate with what you found, what you tried and what a human should do. Never repeat an action that already failed. "
     "10) A container can report running while its main process is frozen (state T) or blocked (D). Then ready fails, and so does everything that depends on it. "
     "When service_status or find_frozen_processes shows such a process, restart only the service that holds it, not its healthy neighbours. "
@@ -85,7 +85,7 @@ TOOLS = [
     _tool("queue_status", "Show the message queue: messages journaled, still waiting, processed and lost, and the queue settings "
           "(what happens when it is full, how deep it may grow, how slow the worker is)."),
     _tool("replay_queue", "ACTION. Put every journaled message that is neither queued nor processed back on the queue, "
-          "under the settings that are active now."),
+          "under the settings that are active now. If those settings are what lost the messages, they will be lost again."),
     _tool("escalate", "Hand the incident to a human. Use it when the root cause is outside what your tools can change, "
           "or when every safe action that addresses it has failed. Say what you found, what you tried and what a human should do. "
           "This ends your work on the incident.",

@@ -113,6 +113,7 @@ def queue_status():
         return q["error"]
     lines = [x.strip() for x in ops.ACTIVE.read_text(encoding="utf-8").splitlines() if "QUEUE_" in x or "WORKER_" in x]
     q["configured"] = lines or "defaults: full queue answers 429 (reject), depth 1000, no worker delay"
+    q["verdict"] = ("%d messages are still lost" % q["queue_lost"]) if q["queue_lost"] else "no messages lost"
     return q
 
 
