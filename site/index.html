@@ -221,10 +221,10 @@ function frac(list,m){var r=rowsFor(list,m);return {ok:r.filter(function(x){retu
   var ha=frac1(hng),hn=frac(hng,"naive");
   function cls(f){return f.ok===f.n?"ok":(f.ok===0?"":"mid")}
   var t=[
-   ["Outages",oa,"runbook <b>"+ob.ok+"/"+ob.n+"</b>, naive restart <b>"+on.ok+"/"+on.n+"</b>"],
-   ["Silent data problems",da,"both baselines <b>"+db.ok+"/"+db.n+"</b> and <b>"+dn.ok+"/"+dn.n+"</b>. The site looked healthy the whole time."],
-   ["Unfixable fault",ua,"stopped and wrote a ticket with no repair action. The naive restart acted wrongly in <b>"+un.wrong+" of "+un.n+"</b> runs."],
-   ["Hangs",ha,"gpt-oss-120b, the model used for every claim. Naive restart: <b>"+hn.ok+"/"+hn.n+"</b>."]
+   ["Outages",oa,"The fixed runbook got <b>"+ob.ok+" of "+ob.n+"</b>. Restarting everything got <b>"+on.ok+"</b>."],
+   ["Silent data problems",da,"The site looked fine the whole time. The runbook got <b>"+db.ok+" of "+db.n+"</b>, restarting got <b>"+dn.ok+" of "+dn.n+"</b>."],
+   ["Unfixable fault",ua,"In these runs it wrote a ticket and changed nothing. Restarting did the wrong thing in <b>"+un.wrong+" of "+un.n+"</b>."],
+   ["Hangs",ha,"gpt-oss-120b runs only. Restarting got <b>"+hn.ok+" of "+hn.n+"</b>."]
   ];
   document.getElementById("tiles").innerHTML=t.map(function(x){
     return '<div class="tile"><h3>'+x[0]+'</h3><div class="big '+cls(x[1])+'">'+x[1].ok+'/'+x[1].n+'</div><p>'+x[2]+'</p></div>';
