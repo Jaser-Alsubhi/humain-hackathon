@@ -159,7 +159,7 @@ On `hung_backend` every run took one action, the restart of the backend, with ne
 | fz-e911d2 | database stopped + database name changed | no | yes | yes (0), 35 s |
 | fz-de4c32 | database paused + password changed + backend paused | no | yes | no (2), 331 s |
 
-**Totals.** Agent 10/12 and 6 wrong actions (in 4 runs). Runbook 10/12 and 0. Naive 1/12 and 12. The agent used 24,189 tokens per run on average (7,384 to 42,399) and took 89 s on average (most runs took about 35 s or less). The agent itself verified recovery in 8 of 12 runs.
+**Totals.** Agent 10/12 and 6 wrong actions (in 4 runs). Runbook 10/12 and 0. Naive 1/12 and 12. The agent used 24,188 tokens per run on average (7,384 to 42,399) and took 89 s on average (most runs took about 35 s or less). The agent itself verified recovery in 8 of 12 runs.
 
 **What this shows.** The agent does not beat the scripted runbook on generic infrastructure faults: both recover 10 of 12. Two of the agent's four weaker runs were misses (`fz-b56b2d`, `fz-de4c32`) and two recovered with extra or unneeded actions (`fz-dc3a0d`, `fz-0b3410`). In `fz-de4c32` the agent unpaused both containers, then restarted and recreated the backend without ever calling the config-changes tool, and the runbook fixed the same fault in 6 s. Its value is on the five problems in this document, where the runbook scores 0.
 

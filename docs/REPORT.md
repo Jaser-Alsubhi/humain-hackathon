@@ -46,11 +46,11 @@ Table notes: agent columns pool every saved agent run, including a few early run
 
 | Method | Recovered | Wrong actions | Mean tokens | Mean time |
 |---|---|---|---|---|
-| Naive restart | 1/12 | 12 | 0 | 24 s |
-| Fixed runbook | 10/12 | 0 | 0 | 12 s |
-| Mend agent (gpt-oss-120b) | 10/12 | 6 (in 4 runs) | 24,189 | 89 s |
+| Naive restart | 1/12 | 12 | 0 | 22 s |
+| Fixed runbook | 10/12 | 0 | 0 | 13 s |
+| Mend agent (gpt-oss-120b) | 10/12 | 6 (in 4 runs) | 24,188 | 89 s |
 
-The agent missed `fz-b56b2d` (database connections exhausted plus a wrong password) and `fz-de4c32` (paused containers plus a changed password). The runbook missed `fz-b56b2d` and `fz-ca6865`. On generic infrastructure faults the agent therefore matches a hand-written runbook but costs more (24,189 tokens and 89 s on average) and acts wrongly more often. Its advantage is on the problems a runbook cannot handle. Per-fault detail is in `docs/EVIDENCE.md`.
+The agent missed `fz-b56b2d` (database connections exhausted plus a wrong password) and `fz-de4c32` (paused containers plus a changed password). The runbook missed `fz-b56b2d` and `fz-ca6865`. On generic infrastructure faults the agent therefore matches a hand-written runbook but costs more (24,188 tokens and 89 s on average) and acts wrongly more often. Its advantage is on the problems a runbook cannot handle. Per-fault detail is in `docs/EVIDENCE.md`.
 
 Baselines first, always. The naive restart fixes almost nothing because most faults are not "restart the backend". The scripted runbook solves the outages it has rules for (15 of 18 core runs) and nothing in the silent-data, unfixable or hang families, because no container is down and no config changed.
 
