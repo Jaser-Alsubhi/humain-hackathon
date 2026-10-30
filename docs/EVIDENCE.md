@@ -33,3 +33,29 @@ Fault: root@% password rotated inside the database container, backend crash-loop
 - The ticket diagnosis is only partly right. It cites "Access denied" but blames root being restricted to localhost, and recommends granting remote access. The real cause is a rotated password, so that recommendation would not fix it.
 - The handled-correctly check is keyword-based, so it is weak evidence of a correct diagnosis.
 - Limits: 2 saved repeats, not 5. A development scenario designed knowing the fix. The prompt change was not regression-tested on the fixable scenarios for premature escalation.
+
+## #4 Hang: a process that is running but frozen
+
+**Scenarios.** `hung_backend` freezes the backend process with SIGSTOP. Docker still reports the container as running, but `/health` and `/ready` time out. The fix is to restart the backend. `hung_exhaust` combines connection exhaustion with a frozen backend. The fix is to restart the database, then the backend.
+
+**Baselines.** `hung_backend`: naive 1/1 (a blanket restart fixes it in 6s), runbook 0/1. `hung_exhaust`: naive 0/1, runbook 0/1. On `hung_backend` the naive baseline beats the agent on speed and cost, and that is stated plainly here.
+
+**Agent (gpt-oss-120b on Cerebras), all runs, none dropped:**
+
+| Run | Scenario | Result | Actions (wrong) | Time | Tokens |
+|---|---|---|---|---|---|
+| 1 | hung_backend | failed | 0 (0) | 213s | 38,697 |
+| 2 | hung_backend | failed | 1 (1) | 204s | 32,539 |
+| 3 | hung_backend | recovered | 3 (2) | 80s | 31,353 |
+| 4 | hung_exhaust | recovered | 2 (0) | 183s | 32,493 |
+
+One earlier `hung_exhaust` attempt ended in a rate-limit error and is counted as an infrastructure error, not a failure. One earlier `hung_backend` run was invalid because Docker Desktop was closed, and it was removed. A gpt-oss-20b run of `hung_exhaust` failed (0/1, 237s, 38,548 tokens).
+
+**What went wrong, from the audit logs.**
+- Run 1: the agent spent its investigation steps on logs and metrics, then made four blocked investigation calls in a row and never acted. The guard's block message did not say which tools were still allowed.
+- Run 2: with the guard fixed, it acted, but restarted the healthy frontend and then escalated. Nothing in its tool output showed that the backend process was frozen.
+- Run 3: with process state added to `service_status`, the first tool result showed the backend as `Tsl` (T = stopped). The agent still restarted and recreated the healthy frontend first, then restarted the backend and recovered. It had the right evidence and ignored it.
+
+**Two changes made after seeing these failures.** Both are general, not scenario-specific, and were made before the held-out run: (1) when investigation is closed, the guard names the tools still allowed (commit 91d579c); (2) `service_status` shows each container's process state (commit f918377). I did not add a hang-specific hint to the prompt, because that would tune the agent to this scenario.
+
+**Limits.** Each configuration was run once or three times, so these are anecdotes, not rates. The agent recovered 1 of 3 `hung_backend` runs, and that run carried two wrong actions. The model's tendency to ignore a correct process-state signal is unresolved. Latency of 80 to 213 seconds is mostly API throttling between steps.
