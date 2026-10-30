@@ -142,7 +142,7 @@ On `hung_backend` every run took one action, the restart of the backend, with ne
 
 ## #7 Held-out run: 12 unseen generated faults
 
-**What was run.** `python -m recovery.evaluate --set heldout --methods agent --repeats 1`, once, on the frozen code (commit `f32c07b`). The 12 faults come from a locked fuzzer manifest (`results/fuzz_manifest.json`, seed 20261030). The baselines were run on the same 12 faults earlier. No fault was rerun and no code changed after the run.
+**What was run.** `python -m recovery.evaluate --set heldout --methods agent --repeats 1`, once, on the frozen code (commit `2f73884`). The 12 faults come from a locked fuzzer manifest (`results/fuzz_manifest.json`, seed 20261030). The commit hash was rewritten after the run, when commit authorship was corrected (the file contents are identical, the run was made on the code now at `2f73884`). The baselines were run on the same 12 faults earlier. No fault was rerun and no code changed after the run.
 
 | Fault | Combination | Naive | Runbook | Agent (wrong actions) |
 |---|---|---|---|---|

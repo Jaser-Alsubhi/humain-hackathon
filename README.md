@@ -21,7 +21,7 @@ Every run saved in the results file is counted, failures included. The file keep
 
 - Naive restart: restart the backend and hope. Fixed runbook: scripted rules (start stopped containers, unpause paused ones, roll back a changed config).
 - Agent model: gpt-oss-120b on Cerebras (an earlier phase used the same model on Groq). A smaller model, gpt-oss-20b, was tried on some faults and is counted separately in the results file.
-- Held-out result (12 unseen generated fault combinations, evaluated once on the frozen code `f32c07b`): agent 10/12, fixed runbook 10/12, naive restart 1/12. The agent made 6 wrong actions in 4 runs and the runbook made none. Details are in `docs/REPORT.md` and `docs/EVIDENCE.md`.
+- Held-out result (12 unseen generated fault combinations, evaluated once on the frozen code `2f73884`): agent 10/12, fixed runbook 10/12, naive restart 1/12. The agent made 6 wrong actions in 4 runs and the runbook made none. Details are in `docs/REPORT.md` and `docs/EVIDENCE.md`.
 
 ## The five problems from the brief
 
