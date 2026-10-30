@@ -14,11 +14,22 @@ CSS = """/*LIVE-CSS*/
 .livenote{padding:0 16px 10px;color:var(--muted);font-size:14px}
 ol.steps li.info{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:14px;color:var(--muted)}
 .btn:disabled{opacity:.55;cursor:default}
+.hint{padding:0 16px 12px;color:var(--muted);font-size:14px}
+.tabs{justify-content:center}
+footer.foot{display:block;padding:0 0 28px;border-top:1px solid var(--line);margin-top:8px;font-size:14.5px}
+.foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:32px;padding:32px 0 24px}
+.foot-grid h4{margin:0 0 10px;font-size:14.5px;color:var(--ink)}
+.foot-grid p{margin:0;max-width:44ch;line-height:1.5}
+.foot-grid a{display:block;margin:0 0 7px;color:var(--muted);text-decoration:none}
+.foot-grid a:hover{color:var(--ink);text-decoration:underline}
+.foot-note{padding-top:18px;border-top:1px solid var(--line);text-align:center;font-size:13.5px}
+@media (max-width:700px){.foot-grid{grid-template-columns:1fr;gap:22px}}
 /*END-LIVE-CSS*/
 """
 
 MARKUP = """<!--LIVE-MARKUP--><div class="modes" id="modes" role="tablist" aria-label="Mode"><button data-mode="live" role="tab" aria-selected="false" hidden>Break it live</button><button data-mode="replay" role="tab" aria-selected="true">Recorded replay</button></div>
     <div class="bar" id="livebar" hidden><select id="lsc" aria-label="Choose a fault to inject"></select><button class="btn" id="lbreak">Break it</button></div>
+    <div class="hint" id="lhint" hidden></div>
     <!--END-LIVE-MARKUP-->
     """
 
@@ -26,11 +37,14 @@ JS = r"""/*LIVE-JS*/
 (function(){
   var modes=document.querySelectorAll("#modes button"),rbar=document.getElementById("sc").parentNode,lbar=document.getElementById("livebar");
   var lsel=document.getElementById("lsc"),lbtn=document.getElementById("lbreak"),ol=document.getElementById("steps");
+  var SHORT={db_down:"Database stops",bad_config:"Bad config deployed",hung_backend:"Backend freezes",silent_drop_payments:"Payments silently lost",sync_corruption:"Sync job corrupts data"};
+  var HINT={db_down:"The site goes down. A restart alone would not be the right first move.",bad_config:"The backend fails after a config change. The fix is to roll the change back.",hung_backend:"Docker still says the backend is running, but its process is frozen.",silent_drop_payments:"Orders are accepted and /ready stays green, but payments are not stored.",sync_corruption:"The site looks healthy while a sync job quietly turns correct records wrong."};
+  var lhint=document.getElementById("lhint");
   var live=false,since=0,pollT=null,available=false,busy=false,labels={};
   function show(m){
     live=(m==="live");
     modes.forEach(function(b){b.setAttribute("aria-selected",b.dataset.mode===m?"true":"false")});
-    rbar.hidden=live;lbar.hidden=!live;
+    rbar.hidden=live;lbar.hidden=!live;if(window.__hint)window.__hint();else lhint.hidden=true;
     clearTimeout(pollT);
     if(live){since=0;idle()}else{reset()}
   }
@@ -80,7 +94,7 @@ JS = r"""/*LIVE-JS*/
     });
   }
   lbtn.addEventListener("click",function(){
-    lbtn.disabled=true;since=0;ol.innerHTML="";
+    lbtn.disabled=true;since=0;ol.innerHTML="";document.getElementById("meta").textContent="Starting a live run...";
     fetch("/api/live/break",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scenario:lsel.value})})
       .then(function(r){return r.json().then(function(j){return [r.status,j]})})
       .then(function(x){
@@ -91,8 +105,10 @@ JS = r"""/*LIVE-JS*/
   modes.forEach(function(b){b.addEventListener("click",function(){show(b.dataset.mode)})});
   fetch("/api/live/scenarios",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
     if(!j.enabled)return;
-    j.scenarios.forEach(function(s){labels[s.id]=s.label});
-    lsel.innerHTML=j.scenarios.map(function(s){return '<option value="'+s.id+'">'+esc(s.label)+'</option>'}).join("");
+    j.scenarios.forEach(function(s){labels[s.id]=SHORT[s.id]||s.label});
+    lsel.innerHTML=j.scenarios.map(function(s){return '<option value="'+s.id+'">'+esc(SHORT[s.id]||s.label)+'</option>'}).join("");
+    function hint(){var h=HINT[lsel.value];lhint.textContent=h||"";lhint.hidden=!h||!live}
+    lsel.addEventListener("change",hint);window.__hint=hint;
     modes[0].hidden=false;available=true;document.getElementById("cta-play").textContent="Break it yourself";show("live");
   }).catch(function(){});
   document.getElementById("cta-play").addEventListener("click",function(e){
@@ -105,16 +121,32 @@ JS = r"""/*LIVE-JS*/
 """
 
 
+OLD_FOOT = ('<footer><span>Built for the Misk x HUMAIN Future AI Builders Hackathon, Challenge 1.</span>'
+            '<span>Jaser Alsubhi, solo participant.</span><span>Demo video, GitHub and slides: added at submission.</span></footer>')
+EMAIL = "JaserAlsubhi0@gmail.com"
+FOOT = ("<!--LIVE-FOOT--><footer class=\"foot\"><div class=\"foot-grid\">"
+        "<div><h4>Mend</h4><p>An agent that finds, fixes and verifies failures in a running system, including silent ones, "
+        "and hands over with a ticket when it cannot fix the cause.</p></div>"
+        "<div><h4>Project</h4><a href=\"https://github.com/Jaser-Alsubhi/humain-hackathon\">Code on GitHub</a>"
+        "<a href=\"#tabs\">Results and limits</a><span style=\"color:var(--muted)\">Demo video and slides: added at submission</span></div>"
+        "<div><h4>Contact</h4><span style=\"display:block;color:var(--ink);margin-bottom:7px\">Jaser Alsubhi</span>"
+        "<a href=\"mailto:" + EMAIL + "\">" + EMAIL + "</a>"
+        "</div></div>"
+        "<div class=\"foot-note\">Built solo for the Misk x HUMAIN Future AI Builders Hackathon, Challenge 1, October 2026.</div>"
+        "</footer><!--END-LIVE-FOOT-->")
+
+
 def strip(html):
     html = re.sub(r"/\*LIVE-CSS\*/.*?/\*END-LIVE-CSS\*/\n?", "", html, flags=re.S)
     html = re.sub(r"<!--LIVE-MARKUP-->.*?<!--END-LIVE-MARKUP-->\s*", "", html, flags=re.S)
+    html = re.sub(r"<!--LIVE-FOOT-->.*?<!--END-LIVE-FOOT-->", lambda m: OLD_FOOT, html, flags=re.S)
     html = html.replace('<div class="bar" id="replaybar"><select id="sc"', '<div class="bar"><select id="sc"')
     return re.sub(r"/\*LIVE-JS\*/.*?/\*END-LIVE-JS\*/\n?", "", html, flags=re.S)
 
 
 def patch(html):
     html = strip(html)
-    for old, new in (("</style>", CSS + "</style>"),
+    for old, new in (("</style>", CSS + "</style>"), (OLD_FOOT, FOOT),
                      ('<div class="bar"><select id="sc"', MARKUP + '<div class="bar" id="replaybar"><select id="sc"'),
                      ("reset();\n</script>", "reset();\n" + JS + "</script>")):
         assert html.count(old) == 1, "cannot find " + old[:40]
