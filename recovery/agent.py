@@ -259,7 +259,8 @@ def _chat(client, model, msgs):
         except Exception as e:
             code = getattr(e, "status_code", 0)
             bad_json = code == 400 and "tool call" in str(e).lower()
-            if attempt == 7 or not (bad_json or code in (429, 500, 502, 503, 504)):
+            transient = type(e).__name__ in ("APITimeoutError", "APIConnectionError")
+            if attempt == 7 or not (bad_json or transient or code in (429, 500, 502, 503, 504)):
                 raise
             if bad_json:
                 STATS["bad_json"] += 1
