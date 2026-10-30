@@ -24,6 +24,12 @@ Every run saved in the results file is counted, failures included. The file keep
 - Agent model: gpt-oss-120b on Cerebras (an earlier phase used the same model on Groq). A smaller model, gpt-oss-20b, was tried on some faults and is counted separately in the results file.
 - Held-out result (12 unseen generated fault combinations, evaluated once on the frozen code `2f73884`): agent 10/12, fixed runbook 10/12, naive restart 1/12. The agent made 6 wrong actions in 4 runs and the runbook made none. Details are in `docs/REPORT.md` and `docs/EVIDENCE.md`.
 
+## Key findings
+
+- **Where it wins.** Faults where the site looks healthy but the data is wrong: agent 14 of 14, naive restart and runbook 0 of 12 each.
+- **Where it ties.** On 12 unseen generated faults, run once on frozen code, the agent and a hand-written runbook both recovered 10.
+- **Where it is weak.** On those 12 faults the agent made 6 wrong actions (the runbook made none) and used about 24,000 tokens per run. In the monitored run of the unfixable fault the first attempt restarted twice before the second attempt escalated.
+
 ## The five problems from the brief
 
 | Problem | Our scenario | Status |

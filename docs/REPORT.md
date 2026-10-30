@@ -2,13 +2,22 @@
 
 Misk x HUMAIN Future AI Builders Hackathon, Challenge 1. Solo entry. Numbers come from `results/recovery_eval.json`, rebuilt with `python scripts/make_results.py`. The evidence behind each number is in `docs/EVIDENCE.md`.
 
+## Summary
+
+Mend is an agent that finds the cause of a failure, takes the smallest safe action, checks that the system really recovered, and hands over a ticket when it cannot fix the cause. A monitor starts it automatically, so it works with nobody watching.
+
+- **Where it clearly wins.** Faults where the site looks healthy and the data is wrong (silent data loss, a corrupting sync job, a queue that drops messages): agent 14 of 14 recovered, while the naive restart and the scripted runbook both recovered 0 of 12.
+- **Where it only ties.** On 12 unseen generated infrastructure faults, run once on frozen code, the agent recovered 10 and a hand-written runbook also recovered 10.
+- **Where it is weak.** On those 12 faults the agent made 6 wrong actions (the runbook made none) and used about 24,000 tokens per run. In the one monitored run of the unfixable fault, the first attempt restarted the backend twice before the second attempt escalated correctly.
+- **How to read the numbers.** Most scenarios were written knowing their fixes, so they show behaviour, not an unbiased test. The held-out run is the unbiased number.
+
 ## 1. Problem and approach
 
 **Task.** Build an agent that identifies, diagnoses and helps recover a system when something goes wrong, including when several things break at once, and verifies that the system has recovered.
 
 **Success metric.** A fault counts as recovered only when the stack's `/ready` endpoint returns 200 and, for data faults, the invariant check is clean and every table really stores writes. Alongside recovery I count wrong actions (any executed action outside the scenario's known correct fix set), time, steps and tokens. A healthy `/health` alone proves nothing, because several faults leave it green.
 
-**What we built.** A tool-calling agent (gpt-oss-120b) over a three-service stack (frontend, backend, MySQL) running in Docker Compose. It investigates with read-only tools, acts through a small allowlist, verifies after every action, and escalates with a ticket when it cannot fix the cause. A guard enforces step and action limits and redacts secrets. Two non-AI baselines make the gain measurable: a naive restart and a scripted runbook. A monitor (`recovery.watch`) checks `/ready` and the data checks every 5 seconds and starts the agent by itself after two failed checks, so a failure at 3 a.m. is handled with nobody watching. A public Break it button on the project site runs that whole loop on a real server.
+**What I built.** A tool-calling agent (gpt-oss-120b) over a three-service stack (frontend, backend, MySQL) running in Docker Compose. It investigates with read-only tools, acts through a small allowlist, verifies after every action, and escalates with a ticket when it cannot fix the cause. A guard enforces step and action limits and redacts secrets. Two non-AI baselines make the gain measurable: a naive restart and a scripted runbook. A monitor (`recovery.watch`) checks `/ready` and the data checks every 5 seconds and starts the agent by itself after two failed checks, so a failure at 3 a.m. is handled with nobody watching. A public Break it button on the project site runs that whole loop on a real server.
 
 **Mapping to the five problems on the challenge page.**
 
@@ -33,7 +42,15 @@ Misk x HUMAIN Future AI Builders Hackathon, Challenge 1. Solo entry. Numbers com
 
 Table notes: agent columns pool every saved agent run, including a few early runs on the smaller gpt-oss-20b. The Hangs cell 8/9 includes one failed `hung_exhaust` run on gpt-oss-20b. On gpt-oss-120b, the model behind every other claim, hangs are 8/8. Those 8 are development results, not a blind test.
 
-**Held-out result, evaluated once on the frozen final code (commit `2f73884`, 12 generated fault combinations, one run each):** agent 10/12, fixed runbook 10/12, naive restart 1/12. Wrong actions: agent 6 (in 4 runs), runbook 0, naive 12. The agent missed `fz-b56b2d` (database connections exhausted plus a wrong password) and `fz-de4c32` (paused containers plus a changed password). The runbook missed `fz-b56b2d` and `fz-ca6865`. On generic infrastructure faults the agent therefore matches a hand-written runbook but costs more (24,189 tokens and 89 s on average) and acts wrongly more often. Its advantage is on the problems a runbook cannot handle. Per-fault detail is in `docs/EVIDENCE.md`.
+**Held-out result (unbiased).** 12 generated fault combinations, one run each, on the frozen final code (commit `2f73884`):
+
+| Method | Recovered | Wrong actions | Mean tokens | Mean time |
+|---|---|---|---|---|
+| Naive restart | 1/12 | 12 | 0 | 24 s |
+| Fixed runbook | 10/12 | 0 | 0 | 12 s |
+| Mend agent (gpt-oss-120b) | 10/12 | 6 (in 4 runs) | 24,189 | 89 s |
+
+The agent missed `fz-b56b2d` (database connections exhausted plus a wrong password) and `fz-de4c32` (paused containers plus a changed password). The runbook missed `fz-b56b2d` and `fz-ca6865`. On generic infrastructure faults the agent therefore matches a hand-written runbook but costs more (24,189 tokens and 89 s on average) and acts wrongly more often. Its advantage is on the problems a runbook cannot handle. Per-fault detail is in `docs/EVIDENCE.md`.
 
 Baselines first, always. The naive restart fixes almost nothing because most faults are not "restart the backend". The scripted runbook solves the outages it has rules for (15 of 18 core runs) and nothing in the silent-data, unfixable or hang families, because no container is down and no config changed.
 
@@ -44,7 +61,7 @@ Baselines first, always. The naive restart fixes almost nothing because most fau
 - **Faults the runbook has no rule for.** Six extra faults (unplugged network, out of memory, frozen processes and similar) and 20 fuzzer-generated fault combinations, with a locked held-out split of 12.
 - **Failure handling.** LLM timeouts and dropped connections are retried instead of crashing, a daily rate limit fails fast with a clear message, and the guard stops the loop after 12 steps or 4 actions. When the model is stuck, the harness escalates to a stronger model, and when nothing is safe, the agent escalates to a human.
 - **Hangs, stated plainly.** Before the fixes in section 4 the agent recovered 1 of 3 `hung_backend` runs, with two wrong actions. After them it recovered 5 of 5 `hung_backend` and 3 of 3 `hung_exhaust` runs with no wrong action. A blanket restart fixes the plain freeze just as well and faster, and the result depends on a tool that names the frozen process. The separate effect of the prompt rule was not measured.
-- **Unattended operation.** The monitor recovered a stopped database and a silent sync corruption on the laptop, and each of five faults run once through the public button on the real server recovered and was verified (17 to 137 seconds).
+- **Unattended operation.** The monitor recovered a stopped database and a silent sync corruption on the laptop. On the unfixable fault it needed both of its two attempts: the first restarted the backend twice and ended without a ticket, the second escalated correctly. Each of five faults run once through the public button on the real server recovered and was verified (17 to 137 seconds).
 - **What still breaks.** Faults outside the tool families need new tools or end in escalation. The escalation ticket for the credential fault was only partly right: it cited the right error but blamed a host restriction and recommended the wrong fix. The check that the ticket is handled correctly is keyword-based, so it is weak evidence of a correct diagnosis.
 
 ## 4. Evaluation and iteration
@@ -84,7 +101,7 @@ Baselines first, always. The naive restart fixes almost nothing because most fau
 
 ## 7. Limitations and next steps
 
-1. **Held-out performance** is the unbiased number: 10/12, level with the runbook, with 6 wrong actions. The held-out set is 12 faults with one run each, so it is a small sample. Dev scenarios were designed knowing their fixes.
+1. **Held-out performance** is the unbiased number: 10/12, level with the runbook, with 6 wrong actions. The held-out set is 12 faults with one run each, so it is a small sample. Dev scenarios were designed knowing their fixes. Docker Desktop reported a full disk on the laptop around the end of the run, a side effect of an unrelated download. The results show no infrastructure errors, but I cannot rule out that it slowed the last fault (`fz-de4c32`). Every run is counted as it ran.
 2. **The queue is a simulation.** It is a table and a worker thread in the same database, not a message broker, and the fault was designed knowing the fix.
 3. **Hangs.** The fix was made after seeing the failures and depends on the frozen-process tool, and the plain freeze is also fixed by a blanket restart.
 4. **Tool coverage.** New fault families need new tools. A more general tool set (or a sandboxed shell with review) would widen coverage.
