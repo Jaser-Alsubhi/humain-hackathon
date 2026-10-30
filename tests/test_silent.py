@@ -136,6 +136,6 @@ def test_ledger_tools_do_nothing_without_a_ledger(monkeypatch):
     assert "no ledger" in silent.resync_ledger()
 
 
-def test_buggy_sync_job_differs_from_the_standard_one_only_in_the_copied_amount():
-    assert silent.SYNC_GOOD != silent.SYNC_BUGGY
-    assert silent.SYNC_GOOD.replace("NEW.amount_cents,", "") == silent.SYNC_BUGGY.replace("NEW.amount_cents + FLOOR(NEW.id / 5),", "")
+def test_the_bug_is_a_second_trigger_that_rewrites_existing_ledger_rows():
+    assert "UPDATE ledger" in silent.SYNC_DRIFT and "FOLLOWS sync_job" in silent.SYNC_DRIFT
+    assert "UPDATE" not in silent.SYNC_GOOD and "INSERT INTO ledger" in silent.SYNC_GOOD

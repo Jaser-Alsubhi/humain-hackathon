@@ -12,9 +12,9 @@ Every run saved in the results file is counted, failures included. The file keep
 | Fault family | Naive restart | Fixed runbook | Mend agent | Agent wrong actions | Agent tokens per run |
 |---|---|---|---|---|---|
 | Outages | 0/18 | 15/18 | **22/22** | 0 | 8,926 |
-| Silent data faults | 0/9 | 0/9 | **9/9** | 0 | 17,177 |
+| Silent data faults | 0/9 | 0/9 | **9/9** | 0 | 17,210 |
 | Unfixable fault (the agent must escalate) | 0/3 | 0/3 | **2/2** | 0 | 13,256 |
-| Hangs | 1/2 | 0/2 | **2/3** | 2 | 34,131 |
+| Hangs | 1/4 | 0/4 | **8/9** | 0 | 14,204 |
 <!-- RESULTS:END -->
 
 - Naive restart: restart the backend and hope. Fixed runbook: scripted rules (start stopped containers, unpause paused ones, roll back a changed config).

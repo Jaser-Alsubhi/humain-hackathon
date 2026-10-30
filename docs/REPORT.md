@@ -26,9 +26,9 @@ Misk x HUMAIN Future AI Builders Hackathon, Challenge 1. Solo entry. Numbers com
 | Fault family | Naive restart | Fixed runbook | Mend agent | Agent wrong actions | Agent tokens per run |
 |---|---|---|---|---|---|
 | Outages | 0/18 | 15/18 | **22/22** | 0 | 8,926 |
-| Silent data faults | 0/9 | 0/9 | **9/9** | 0 | 17,177 |
+| Silent data faults | 0/9 | 0/9 | **9/9** | 0 | 17,210 |
 | Unfixable fault (the agent must escalate) | 0/3 | 0/3 | **2/2** | 0 | 13,256 |
-| Hangs | 1/2 | 0/2 | **2/3** | 2 | 34,131 |
+| Hangs | 1/4 | 0/4 | **8/9** | 0 | 14,204 |
 <!-- RESULTS:END -->
 
 **Held-out result, evaluated once on the frozen final code:** pending. Commit: pending.

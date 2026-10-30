@@ -38,9 +38,9 @@ Fault: root@% password rotated inside the database container, backend crash-loop
 
 **Scenarios.** `hung_backend` freezes the backend process with SIGSTOP. Docker still reports the container as running, but `/health` and `/ready` time out. The fix is to restart the backend. `hung_exhaust` combines connection exhaustion with a frozen backend. The fix is to restart the database, then the backend.
 
-**Baselines.** `hung_backend`: naive 1/1 (a blanket restart fixes it in 6s), runbook 0/1. `hung_exhaust`: naive 0/1, runbook 0/1. On `hung_backend` the naive baseline beats the agent on speed and cost, and that is stated plainly here.
+**Baselines.** `hung_backend`: naive 1/1 (a blanket restart fixes it in 6s), runbook 0/1. `hung_exhaust`: naive 0/3, runbook 0/3. On `hung_backend` the naive baseline is as good as the agent and faster, and that is stated plainly here. `hung_exhaust` is the fault that separates them.
 
-**Agent (gpt-oss-120b on Cerebras), all runs, none dropped:**
+**Agent (gpt-oss-120b on Cerebras), before the frozen-process fix, all runs, none dropped:**
 
 | Run | Scenario | Result | Actions (wrong) | Time | Tokens |
 |---|---|---|---|---|---|
@@ -49,31 +49,41 @@ Fault: root@% password rotated inside the database container, backend crash-loop
 | 3 | hung_backend | recovered | 3 (2) | 80s | 31,353 |
 | 4 | hung_exhaust | recovered | 2 (0) | 183s | 32,493 |
 
-One earlier `hung_exhaust` attempt ended in a rate-limit error and is counted as an infrastructure error, not a failure. One earlier `hung_backend` run was invalid because Docker Desktop was closed, and it was removed. A gpt-oss-20b run of `hung_exhaust` failed (0/1, 237s, 38,548 tokens).
+One earlier `hung_exhaust` attempt ended in a rate-limit error and is counted as an infrastructure error, not a failure. One earlier `hung_backend` run was invalid because Docker Desktop was closed, and it was removed. A gpt-oss-20b run of `hung_exhaust` failed (0/1, 237s, 38,548 tokens). That run is from before the fix and was not repeated.
 
 **What went wrong, from the audit logs.**
 - Run 1: the agent spent its investigation steps on logs and metrics, then made four blocked investigation calls in a row and never acted. The guard's block message did not say which tools were still allowed.
 - Run 2: with the guard fixed, it acted, but restarted the healthy frontend and then escalated. Nothing in its tool output showed that the backend process was frozen.
 - Run 3: with process state added to `service_status`, the first tool result showed the backend as `Tsl` (T = stopped). The agent still restarted and recreated the healthy frontend first, then restarted the backend and recovered. It had the right evidence and ignored it.
 
-**Two changes made after seeing these failures.** Both are general, not scenario-specific, and were made before the held-out run: (1) when investigation is closed, the guard names the tools still allowed (commit 91d579c); (2) `service_status` shows each container's process state (commit f918377). I did not add a hang-specific hint to the prompt, because that would tune the agent to this scenario.
+**Changes made after seeing these failures.** (1) When investigation is closed, the guard names the tools still allowed. (2) `service_status` shows each container's process state. (3) After run 3 showed that a raw state table is ignored, `service_status` now starts with an explicit warning when a container reports running but holds a frozen process (pid, command, state), and a new `find_frozen_processes` tool says to restart only the service that holds it. (4) SYSTEM rule 10 states, in general terms, that a container can report running while its main process is frozen or blocked, and that only the service holding it should be restarted. Rule 10 is a general rule about a failure class and names no scenario, but it is a prompt change aimed at this failure. Its contribution on its own was not measured, because I did not run an ablation without it. Changes 3 and 4 were made after seeing the dev failures, so these dev numbers are not an unbiased test.
 
-**Limits.** Each configuration was run once or three times, so these are anecdotes, not rates. The agent recovered 1 of 3 `hung_backend` runs, and that run carried two wrong actions. The model's tendency to ignore a correct process-state signal is unresolved. Latency of 80 to 213 seconds is mostly API throttling between steps.
+**Agent after the fix, all runs:**
 
-## #3 Sync corruption: a sync job that drifts a ledger away from the orders
+| Scenario | Agent | Wrong actions | Time per run | Tokens per run | Naive | Runbook |
+|---|---|---|---|---|---|---|
+| hung_backend | 5/5 | 0 | 9 to 11s | about 6,800 | 1/1 | 0/1 |
+| hung_exhaust | 3/3 | 0 | 33 to 47s | 16,700 to 21,600 | 0/3 | 0/3 |
 
-**Scenario.** `sync_corruption` adds a `ledger` table and a sync job (a database trigger on `orders`) that copies every new order into it. The first 20 orders sync correctly. Then the job is replaced by a buggy version that adds one cent for every five order ids, so each later copy drifts further from the truth (15 of 35 ledger rows end up wrong). Orders, payments and the intake journal stay correct, the site stays ready, and every health check passes.
+On `hung_backend` every run took one action, the restart of the backend, with near-identical token counts (6,814 to 6,830). The agent now follows one fixed path: read the warning, restart the service that holds the frozen process, verify. On `hung_exhaust` every run took two actions with no wrong action.
+
+**Limits.** Three to five runs per scenario show stability, not rates. `hung_backend` does not show an advantage over the naive restart. The improvement comes partly from a tool that names the frozen process, so the result depends on that tool. The smaller gpt-oss-20b model failed on `hung_exhaust` before the fix and has not been re-tested. The held-out set is the unbiased test.
+
+## #3 Sync corruption: a sync job that turns good records bad over time
+
+**Scenario.** `sync_corruption` adds a `ledger` table and a sync job (a database trigger on `orders`) that copies every new order into it. The first 20 orders sync correctly, so the ledger starts out right. Then a second trigger is installed that, on every new order, adds one cent to older ledger rows. Rows that were correct turn wrong, and each new order makes more of them wrong: after 15 more orders, all 35 ledger rows differ from their orders. Orders, payments and the intake journal stay correct, the site stays ready, and every health check passes.
 
 **How it is detected.** `check_invariants` compares every third order with its ledger row (a sample), then all orders (the full check). `probe_writes` places a 1 cent test order and reads back what the ledger stored.
 
-**Correct fix.** Reinstall the standard sync job (`restore_sync_job`) and make every ledger row match its order (`resync_ledger`). Doing only one of them is not enough: resyncing alone leaves the job drifting new rows, and restoring alone leaves the old wrong rows.
+**Correct fix.** Reinstall the standard sync job (`restore_sync_job`), which removes the drifting trigger, and make every ledger row match its order (`resync_ledger`). Doing only one of them is not enough: resyncing alone leaves the job drifting new rows, and restoring alone leaves the old wrong rows.
 
-**Zero-token oracle: PASS.** Site stays ready; 15 ledger rows differ; the sampled check and the write probe catch it; the naive restart and the runbook do not fix it; resync alone does not hold; restore alone leaves the old drift; restore then resync fixes it.
+**Zero-token oracle: PASS.** Site stays ready; 35 of 35 ledger rows differ; the sampled check and the write probe catch it; the naive restart and the runbook do not fix it; resync alone does not hold; restore alone leaves the old drift; restore then resync fixes it.
 
 | Method | Recovered | Notes |
 |---|---|---|
 | Naive restart | 0/3 | 1 wrong action in each run |
 | Fixed runbook | 0/3 | takes no action |
-| Mend agent (gpt-oss-120b) | 3/3 | 2 actions each, 0 wrong; 20,578, 20,516 and 20,375 tokens |
+| Mend agent (gpt-oss-120b) | 3/3 | 2 actions each, 0 wrong; 21,632, 18,627 and 21,510 tokens; 15 s, 17 s and 127 s (the slow run is most likely provider rate limiting, not checked) |
 
-**Limits.** This is a development scenario designed knowing the fix, not an unbiased test. The ledger lives in the same database, so it is a simulated replica, not a separate system. The drift starts at a set point and grows with order id, so it is gradual in size but not in onset. The alert for this scenario names the ledger, which narrows the search. Either repair order ends clean, so the check is on the final state. Three runs at temperature 0 show stability, not breadth. An earlier version of this scenario (a trigger adding 1 cent to payments) also passed 3 of 3; it was replaced so that the scenario matches the brief, and its numbers are not used here.
+**Limits.** This is a development scenario designed knowing the fix, not an unbiased test. The ledger lives in the same database, so it is a simulated replica, not a separate system. The drift starts at a set point rather than appearing gradually in time. The alert for this scenario names the ledger, which narrows the search. Either repair order ends clean, so the check is on the final state. Three runs show stability, not rates. Two earlier versions of this scenario passed 3 of 3 too (a trigger adding 1 cent to payments, and a trigger whose error grew with the order id). Both were replaced so that the bug acts on rows that were already correct, which matches the brief, and their numbers are not used here.
+

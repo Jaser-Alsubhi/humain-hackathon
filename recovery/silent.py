@@ -1,7 +1,7 @@
 """Silent-failure scenarios: the site is up and /ready is green, but orders or payments are no longer stored.
 The fault is a table switched to MySQL's BLACKHOLE engine, which accepts every write and keeps nothing.
-sync_corruption is different: a sync job (a trigger) copies every new order into a ledger, and a bug makes the copies
-drift further from the truth with every order. The site stays ready.
+sync_corruption is different: a sync job (a trigger) copies every new order into a ledger. Then a bug starts nudging
+rows that were already correct, a cent at a time, so good records turn bad over time. The site stays ready.
 Designed knowing the fix, so these are dev scenarios, not an unbiased test.
 python -m recovery.silent --oracle   (no model, no tokens)"""
 import json
@@ -23,8 +23,9 @@ LEDGER_TABLE = ("CREATE TABLE ledger (id INT AUTO_INCREMENT PRIMARY KEY, order_r
                 "amount_cents INT NOT NULL, created DATETIME NULL, KEY ix_ledger_ref (order_ref));")
 _SYNC_HEAD = "CREATE TRIGGER sync_job AFTER INSERT ON orders FOR EACH ROW INSERT INTO ledger (order_ref, amount_cents, created) "
 SYNC_GOOD = _SYNC_HEAD + "VALUES (NEW.order_ref, NEW.amount_cents, NEW.created);"
-# The bug: the copied amount drifts upward by one cent for every five orders placed so far.
-SYNC_BUGGY = _SYNC_HEAD + "VALUES (NEW.order_ref, NEW.amount_cents + FLOOR(NEW.id / 5), NEW.created);"
+# The bug: every new order also nudges some older ledger rows by one cent, so rows that were correct turn wrong.
+SYNC_DRIFT = ("CREATE TRIGGER sync_job_drift AFTER INSERT ON orders FOR EACH ROW FOLLOWS sync_job "
+              "UPDATE ledger SET amount_cents = amount_cents + 1 WHERE MOD(id, 4) = MOD(NEW.id, 4);")
 LEDGER_PROBE = ("DELETE FROM orders WHERE order_ref = '%(p)s';DELETE FROM ledger WHERE order_ref = '%(p)s';"
                 "INSERT INTO orders (order_ref, amount_cents, status, created) VALUES ('%(p)s', 1, 'paid', NOW());"
                 "SELECT COALESCE(MAX(amount_cents), -1) FROM ledger WHERE order_ref = '%(p)s';"
@@ -203,7 +204,8 @@ def restore_sync_job():
     """Replace whatever sync job is installed with the standard one: it copies each new order into the ledger unchanged."""
     if not ledger_exists():
         return "there is no ledger table, nothing to restore"
-    rc, out = run_sql("DROP TRIGGER IF EXISTS sync_job;DROP TRIGGER IF EXISTS sync_job_bug;" + SYNC_GOOD)
+    rc, out = run_sql("DROP TRIGGER IF EXISTS sync_job_drift;DROP TRIGGER IF EXISTS sync_job;"
+                      "DROP TRIGGER IF EXISTS sync_job_bug;" + SYNC_GOOD)
     return "sync job restored" if rc == 0 and not out else out[-300:]
 
 
@@ -232,7 +234,7 @@ def healthy():
 
 
 def clean():
-    run_sql("DROP TRIGGER IF EXISTS sync_job_bug;DROP TRIGGER IF EXISTS sync_job;DROP TABLE IF EXISTS ledger;ALTER TABLE orders ENGINE=InnoDB;ALTER TABLE payments ENGINE=InnoDB;"
+    run_sql("DROP TRIGGER IF EXISTS sync_job_bug;DROP TRIGGER IF EXISTS sync_job_drift;DROP TRIGGER IF EXISTS sync_job;DROP TABLE IF EXISTS ledger;ALTER TABLE orders ENGINE=InnoDB;ALTER TABLE payments ENGINE=InnoDB;"
             "TRUNCATE TABLE orders;TRUNCATE TABLE payments;TRUNCATE TABLE order_journal;")
 
 
@@ -253,7 +255,7 @@ def inject(name):
     for i in range(SEED):
         assert post_order("SEED-%03d" % i, 1000 + 7 * i) == 201
     if name == SYNC:
-        run_sql("DROP TRIGGER IF EXISTS sync_job;" + SYNC_BUGGY)
+        run_sql(SYNC_DRIFT)
     else:
         run_sql("ALTER TABLE %s ENGINE=BLACKHOLE;" % t)
     for i in range(LOST):
@@ -312,7 +314,8 @@ def oracle():
     check("site still reports ready (the fault is silent)", ops.http("/ready")[0] == 200)
     check("orders, payments and journal agree: the damage is only in the ledger",
           inv.get("amount_mismatch") == 0 and inv.get("orders_missing") == 0 and inv.get("payments_missing") == 0)
-    check("%d ledger rows differ from their orders" % LOST, inv.get("ledger_mismatch") == LOST)
+    check("rows that were correct have turned wrong (%d of %d ledger rows differ)" % (SEED + LOST, SEED + LOST),
+          inv.get("ledger_mismatch") == SEED + LOST)
     check("the sampled check catches it", inv.get("ledger_sample_wrong", 0) > 0 and inv.get("clean") is False)
     check("write probe sees the drift on the ledger", probe_writes().get("ledger", "").startswith("CORRUPTED"))
     for label, fn in (("naive restart", baseline.naive), ("runbook", baseline.runbook)):

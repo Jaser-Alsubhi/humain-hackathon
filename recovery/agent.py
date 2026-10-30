@@ -78,7 +78,7 @@ TOOLS = [
           "Rows that already exist are left alone."),
     _tool("list_sync_jobs", "List the database triggers (sync jobs): code that runs on every write and can change what is stored."),
     _tool("restore_sync_job", "ACTION. Replace the installed sync job with the standard one, which copies each new order into the "
-          "ledger unchanged. It does not repair ledger rows that are already wrong."),
+          "ledger unchanged, and removes any other trigger that touches the ledger. It does not repair ledger rows that are already wrong."),
     _tool("resync_ledger", "ACTION. Make every ledger row match its order: correct wrong amounts and add missing rows."),
     _tool("escalate", "Hand the incident to a human. Use it when the root cause is outside what your tools can change, "
           "or when every safe action that addresses it has failed. Say what you found, what you tried and what a human should do. "
