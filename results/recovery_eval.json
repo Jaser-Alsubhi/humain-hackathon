@@ -3043,5 +3043,219 @@
     "method": "agent",
     "model": "gpt-oss-120b",
     "run": 2
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 3.093203067779541,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "queue_overflow",
+    "method": "naive",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 3.135708808898926,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "queue_overflow",
+    "method": "naive",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 2.9540822505950928,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "queue_overflow",
+    "method": "naive",
+    "model": "-",
+    "run": 2
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 4.441721439361572,
+    "sequence": [
+      "rollback_config"
+    ],
+    "wrong_actions": 0,
+    "scenario": "queue_overflow",
+    "method": "runbook",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 4.47294282913208,
+    "sequence": [
+      "rollback_config"
+    ],
+    "wrong_actions": 0,
+    "scenario": "queue_overflow",
+    "method": "runbook",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 4.457492351531982,
+    "sequence": [
+      "rollback_config"
+    ],
+    "wrong_actions": 0,
+    "scenario": "queue_overflow",
+    "method": "runbook",
+    "model": "-",
+    "run": 2
+  },
+  {
+    "recovered": false,
+    "actions": 2,
+    "tokens": 17354,
+    "steps": 7,
+    "verified": false,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "queue_status",
+      "replay_queue",
+      "config_changes",
+      "rollback_config",
+      "check_health",
+      "queue_status"
+    ],
+    "calls": [
+      "service_status",
+      "queue_status",
+      "replay_queue",
+      "config_changes",
+      "rollback_config",
+      "check_health",
+      "queue_status"
+    ],
+    "llm_seconds": 60,
+    "rate_retries": 1,
+    "nudges": 0,
+    "wait_seconds": 55,
+    "models": {
+      "gpt-oss-120b": 17354
+    },
+    "escalated_at": null,
+    "seconds": 64.76034617424011,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "queue_overflow",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 0
+  },
+  {
+    "recovered": true,
+    "actions": 3,
+    "tokens": 25318,
+    "steps": 10,
+    "verified": false,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "check_health",
+      "queue_status",
+      "replay_queue",
+      "config_changes",
+      "rollback_config",
+      "check_health",
+      "config_changes",
+      "replay_queue",
+      "queue_status"
+    ],
+    "calls": [
+      "service_status",
+      "check_health",
+      "queue_status",
+      "replay_queue",
+      "config_changes",
+      "rollback_config",
+      "check_health",
+      "config_changes",
+      "replay_queue",
+      "queue_status"
+    ],
+    "llm_seconds": 117,
+    "rate_retries": 2,
+    "nudges": 0,
+    "wait_seconds": 110,
+    "models": {
+      "gpt-oss-120b": 25318
+    },
+    "escalated_at": null,
+    "seconds": 125.68764448165894,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "queue_overflow",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 1
+  },
+  {
+    "recovered": true,
+    "actions": 2,
+    "tokens": 22525,
+    "steps": 9,
+    "verified": false,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "check_health",
+      "queue_status",
+      "config_changes",
+      "rollback_config",
+      "check_health",
+      "config_changes",
+      "replay_queue",
+      "queue_status"
+    ],
+    "calls": [
+      "service_status",
+      "check_health",
+      "queue_status",
+      "config_changes",
+      "rollback_config",
+      "check_health",
+      "config_changes",
+      "replay_queue",
+      "queue_status"
+    ],
+    "llm_seconds": 62,
+    "rate_retries": 1,
+    "nudges": 0,
+    "wait_seconds": 56,
+    "models": {
+      "gpt-oss-120b": 22525
+    },
+    "escalated_at": null,
+    "seconds": 66.53547954559326,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "queue_overflow",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 2
   }
 ]
