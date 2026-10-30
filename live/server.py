@@ -29,6 +29,7 @@ SCENARIOS = {
     "hung_backend": "The backend freezes, but Docker still says it is running",
     "silent_drop_payments": "Payments are accepted but silently lost",
     "sync_corruption": "A sync job turns good records bad",
+    "queue_overflow": "Messages are lost during a traffic spike",
 }
 LOCK = threading.RLock()
 RUN = {"state": "idle", "scenario": None, "events": [], "recovered": None, "started": 0.0, "ended": 0.0}

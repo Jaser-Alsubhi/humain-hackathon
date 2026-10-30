@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 GROUPS = [
     ("Outages", ["db_down", "db_paused", "bad_config", "compound", "injection", "conn_exhaust"]),
-    ("Silent data faults", ["silent_drop_payments", "silent_drop_orders", "sync_corruption"]),
+    ("Silent data faults", ["silent_drop_payments", "silent_drop_orders", "sync_corruption", "queue_overflow"]),
     ("Unfixable fault (the agent must escalate)", ["unfixable_credentials"]),
     ("Hangs", ["hung_backend", "hung_exhaust"]),
 ]
