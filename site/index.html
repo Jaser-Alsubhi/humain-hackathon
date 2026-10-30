@@ -63,6 +63,7 @@ ol.steps li .t.esc{background:var(--warn-bg);color:var(--warn)}
 .tile .big.ok{color:var(--ok)} .tile .big.mid{color:var(--warn)}
 .tile p{margin:10px 0 0;font-size:14.5px;color:var(--muted)}
 .tile p b{color:var(--ink);font-weight:600}
+.tilenote{margin:14px 0 22px;color:var(--muted);font-size:14px}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;padding:6px 0 14px}
 .tabs button{border:1px solid #B9C1C9;background:transparent;border-radius:10px;padding:10px 16px;font-weight:600}
 .tabs button:hover{background:#E6EAEE}
@@ -131,6 +132,7 @@ footer.foot{display:block;margin-top:64px;padding:0;border-top:1px solid var(--l
 </section>
 
 <section class="tiles" id="tiles"></section>
+<p class="tilenote">Development runs on scenarios written knowing the fix, not a blind test. The held-out result is added after the final run.</p>
 
 <div class="tabs" role="tablist" id="tabs">
   <button role="tab" aria-selected="false" data-tab="results">All results</button>
@@ -221,7 +223,7 @@ function frac(list,m){var r=rowsFor(list,m);return {ok:r.filter(function(x){retu
    ["Outages",oa,"runbook <b>"+ob.ok+"/"+ob.n+"</b>, naive restart <b>"+on.ok+"/"+on.n+"</b>"],
    ["Silent data problems",da,"both baselines <b>"+db.ok+"/"+db.n+"</b> and <b>"+dn.ok+"/"+dn.n+"</b>. The site looked healthy the whole time."],
    ["Unfixable fault",ua,"stopped and wrote a ticket with no repair action. The naive restart acted wrongly in <b>"+un.wrong+" of "+un.n+"</b> runs."],
-   ["Hangs",ha,"after the frozen-process fix the agent recovered 5 of 5 and 3 of 3 with no wrong action. The one miss is an earlier smaller-model run. Naive restart: <b>"+hn.ok+"/"+hn.n+"</b>."]
+   ["Hangs",ha,"the one miss is an earlier run on the smaller model. Since the frozen-process fix: <b>5/5</b> and <b>3/3</b>. Naive restart: <b>"+hn.ok+"/"+hn.n+"</b>."]
   ];
   document.getElementById("tiles").innerHTML=t.map(function(x){
     return '<div class="tile"><h3>'+x[0]+'</h3><div class="big '+cls(x[1])+'">'+x[1].ok+'/'+x[1].n+'</div><p>'+x[2]+'</p></div>';
