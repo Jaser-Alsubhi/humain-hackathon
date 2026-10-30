@@ -7,7 +7,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from recovery import ops, silent
+from recovery import escalation, ops, silent
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT_DIR = ROOT / "results" / "audit"
@@ -25,6 +25,7 @@ SYSTEM = (
     "6) More than one thing can be broken at once. Start with service_status. Fix a stopped, exited or paused dependency (the database) before anything downstream, and after every fix run check_health again: if ready is still not 200, keep investigating. "
     "7) As soon as check_health shows ready 200 after your fix (and, for a data problem, check_invariants shows clean), stop investigating and reply with a short summary: root cause, what you did, how you verified. Do not keep reading logs once recovery is verified. "
     "8) Before replaying or repairing data, confirm that the destination really stores writes. "
+    "9) If the root cause you found is outside what your tools can change, or every safe action that addresses it has failed, call escalate with what you found, what you tried and what a human should do. Never repeat an action that already failed. "
     "If you cannot fix it, say so and describe what you found."
 )
 
@@ -68,6 +69,11 @@ TOOLS = [
           TABLE, ["table"]),
     _tool("reconcile_from_journal", "ACTION. Replay every journal entry that is missing from the orders or payments tables. "
           "Rows that already exist are left alone."),
+    _tool("escalate", "Hand the incident to a human. Use it when the root cause is outside what your tools can change, "
+          "or when every safe action that addresses it has failed. Say what you found, what you tried and what a human should do. "
+          "This ends your work on the incident.",
+          {"summary": {"type": "string"}, "findings": {"type": "string"}, "tried": {"type": "string"},
+           "recommendation": {"type": "string"}}, ["summary", "findings", "tried", "recommendation"]),
 ]
 
 ACT = {"restart_service", "start_service", "unpause_service", "rollback_config", "recreate_service",
@@ -97,6 +103,7 @@ REGISTRY = {
     "table_info": silent.table_info,
     "restore_table": silent.restore_table,
     "reconcile_from_journal": silent.reconcile_from_journal,
+    "escalate": escalation.escalate,
 }
 
 _REDACTIONS = [
@@ -278,7 +285,8 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
     STATS["rate_retries"] = 0
     STATS["last_error"] = ""
     STATS["wait_seconds"] = 0.0
-    guard = Guard(REGISTRY, ACT, max_steps, max_actions, dry_run, reserve=2, always={"check_health", "check_invariants"},
+    escalation.LAST["path"] = None
+    guard = Guard(REGISTRY, ACT, max_steps, max_actions, dry_run, reserve=2, always={"check_health", "check_invariants", "escalate"},
                   depends=ops.dependencies(), settle=12, wait=ops.wait_ready)
     AUDIT_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
@@ -305,6 +313,7 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
     tokens, final, sequence, acted, verified, t_recover = 0, "", [], False, False, None
     executed, llm_seconds = [], 0.0
     seen, nudges, waits_left = {}, 0, 0
+    handed_off = False
     for _ in range(max_steps + 3):
         if time.time() - started - STATS["wait_seconds"] > max_seconds:
             final = "stopped: time budget exhausted"
@@ -376,10 +385,16 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
                                               _ascii(result.replace("\n", " | "))[:110]))
             msgs.append({"role": "tool", "tool_call_id": tc.id,
                          "content": "<tool_output>\n%s\n</tool_output>%s" % (result, note)})
+            if name == "escalate" and not blocked and not result.startswith("error"):
+                handed_off, final = True, "escalated to a human: " + str(args.get("summary", ""))[:300]
+                break
+        if handed_off:
+            break
     recovered = ops.wait_ready(30) and (silent.healthy() if scenario in silent.TARGET else True)
     log({"final": final[:500], "recovered": recovered})
     return {"scenario": scenario, "recovered": recovered, "steps": guard.steps, "actions": guard.action_count,
             "verified": verified, "seconds": time.time() - started, "tokens": tokens,
             "final": final, "audit": str(audit), "sequence": sequence, "time_to_recover": t_recover, "bad_json": STATS["bad_json"],
             "rate_retries": STATS["rate_retries"], "llm_seconds": llm_seconds, "executed": executed, "nudges": nudges, "last_error": STATS["last_error"],
-            "wait_seconds": round(STATS["wait_seconds"]), "models": used, "escalated_at": escalated_at}
+            "wait_seconds": round(STATS["wait_seconds"]), "models": used, "escalated_at": escalated_at,
+            "handed_off": handed_off, "ticket": escalation.LAST["path"]}

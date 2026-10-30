@@ -8,7 +8,7 @@ import sys
 import time
 from pathlib import Path
 
-from recovery import agent, baseline, scenarios, silent
+from recovery import agent, baseline, escalation, scenarios, silent, unfixable
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results" / "recovery_eval.json"
@@ -59,9 +59,12 @@ def trial(name, method):
                  "steps": a["steps"], "verified": a["verified"], "bad_json": a["bad_json"],
                  "sequence": a["executed"], "calls": a["sequence"], "llm_seconds": round(a["llm_seconds"]),
                  "rate_retries": a["rate_retries"], "nudges": a.get("nudges", 0), "wait_seconds": a.get("wait_seconds", 0),
-                 "models": a.get("models", {}), "escalated_at": a.get("escalated_at"), "seconds": t if t is not None else a["seconds"]}
+                 "models": a.get("models", {}), "escalated_at": a.get("escalated_at"), "seconds": t if t is not None else a["seconds"],
+                 "handed_off": a.get("handed_off", False), "ticket": a.get("ticket")}
         if name in silent.TARGET and method != "agent":
             r["recovered"] = silent.healthy()
+        if name in unfixable.TARGET and method == "agent":
+            r["recovered"] = bool(r.get("handed_off")) and escalation.handled(r.get("ticket"))
         r["wrong_actions"] = len(wrong_actions(name, r.get("sequence", [])))
     except Exception as e:
         r = {"recovered": False, "actions": 0, "seconds": 0, "error": type(e).__name__, "detail": agent.redact(str(e))[:500]}
@@ -108,6 +111,8 @@ def main():
         names = faults_extra.names()
     elif split == "silent":
         names = silent.names()
+    elif split == "unfixable":
+        names = unfixable.names()
     elif split:
         from recovery import fuzz
         names = fuzz.ids(split)
