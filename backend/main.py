@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend import models  # noqa: F401
 from backend.db import Base, engine
 from backend.items import router as items_router
+from backend.orders import router as orders_router
 
 
 @asynccontextmanager
@@ -23,6 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(items_router)
+app.include_router(orders_router)
 
 
 @app.get("/health")
