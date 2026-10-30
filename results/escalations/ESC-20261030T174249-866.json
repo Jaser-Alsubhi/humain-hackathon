@@ -1,0 +1,7 @@
+{
+  "time": "2026-10-30T17:42:49",
+  "summary": "Backend cannot connect to MySQL because root user is restricted to localhost. Need to grant remote access or adjust credentials.",
+  "findings": "Backend service fails to start with OperationalError: Access denied for user 'root'@'172.18.0.3'. DB status shows only root@localhost user, so remote connections are not permitted. This indicates the MySQL root account does not allow connections from the backend container IP, likely due to missing or changed user grants. The backend cannot connect to the database, causing the site to be unavailable (health and ready checks failing).",
+  "tried": "Checked service status, health, logs for all services, config changes, DB status. Identified the authentication error but cannot modify MySQL user grants with available tools.",
+  "recommendation": "Create a MySQL user that the backend can use (e.g., grant root or a dedicated user access from the backend container IP or %). Update the backend configuration to use the correct credentials, or adjust the MySQL container startup to allow remote root connections (e.g., set MYSQL_ROOT_HOST=%). Verify by restarting the backend and checking health and ready endpoints, and ensure data invariants are clean."
+}

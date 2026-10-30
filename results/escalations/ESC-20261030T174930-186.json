@@ -1,0 +1,7 @@
+{
+  "time": "2026-10-30T17:49:30",
+  "summary": "Backend cannot connect to MySQL due to mismatched root password, causing service restarts and site outage.",
+  "findings": "Backend service is repeatedly restarting due to a database authentication failure: OperationalError (1045) Access denied for user 'root'@'172.18.0.3' using password. The DB container is running healthy, but the root credentials expected by the backend no longer match the actual MySQL root password. No config changes are detected, indicating the password was likely changed inside the DB (e.g., during a recent restart) without updating the backend's environment variables.",
+  "tried": "Checked service statuses, health endpoints, backend logs (showing auth error), DB logs (healthy), config changes (no diff), DB status (running). No viable fix could be applied with available actions.",
+  "recommendation": "Update the backend's database credentials to match the current MySQL root password, or create a dedicated DB user with appropriate permissions and configure the backend to use it. Ensure the credentials are stored securely (e.g., via Docker secrets or environment variables) and that any password changes are propagated to dependent services."
+}

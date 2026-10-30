@@ -22,3 +22,14 @@ Limits
 - The agent runs at temperature 0, so repeats show stability, not independent trials.
 - Dev scenarios, not held-out.
 - Recovery relies on the intake journal. If the journal were lost, the data could not be restored.
+
+## #5 Escalation: unfixable credential rotation
+
+Fault: root@% password rotated inside the database container, backend crash-loops with "Access denied". No tool can fix it, so the correct action set is empty and success means handing off with a ticket that names the cause.
+
+- naive 0/3 (restarts a service every run, 1 wrong action each). runbook 0/3 (no action, no handoff).
+- agent (gpt-oss-120b) 2/2 saved runs: 0 actions, 0 wrong, ticket written. A separate smoke run (not saved in the results file) also escalated with 0 actions.
+- One earlier run crashed on an LLM timeout (a bug in my retry code, since fixed) after calling recreate_service before reaching a decision. So the agent can act once before it escalates. This is not ruled out.
+- The ticket diagnosis is only partly right. It cites "Access denied" but blames root being restricted to localhost, and recommends granting remote access. The real cause is a rotated password, so that recommendation would not fix it.
+- The handled-correctly check is keyword-based, so it is weak evidence of a correct diagnosis.
+- Limits: 2 saved repeats, not 5. A development scenario designed knowing the fix. The prompt change was not regression-tested on the fixable scenarios for premature escalation.

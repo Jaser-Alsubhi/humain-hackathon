@@ -2278,5 +2278,159 @@
     "method": "agent",
     "model": "gpt-oss-120b",
     "run": 2
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 24.41558837890625,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "unfixable_credentials",
+    "method": "naive",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 25.51145911216736,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "unfixable_credentials",
+    "method": "naive",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 23.41251492500305,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "unfixable_credentials",
+    "method": "naive",
+    "model": "-",
+    "run": 2
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 46.359355449676514,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "unfixable_credentials",
+    "method": "runbook",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 45.868420124053955,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "unfixable_credentials",
+    "method": "runbook",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 51.02210259437561,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "unfixable_credentials",
+    "method": "runbook",
+    "model": "-",
+    "run": 2
+  },
+  {
+    "recovered": true,
+    "actions": 0,
+    "tokens": 14054,
+    "steps": 7,
+    "verified": false,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "check_health",
+      "get_logs:backend",
+      "config_changes",
+      "get_logs:db",
+      "db_status",
+      "escalate"
+    ],
+    "calls": [
+      "service_status",
+      "check_health",
+      "get_logs:backend",
+      "config_changes",
+      "get_logs:db",
+      "db_status",
+      "escalate"
+    ],
+    "llm_seconds": 11,
+    "rate_retries": 0,
+    "nudges": 0,
+    "wait_seconds": 0,
+    "models": {
+      "openai/gpt-oss-120b": 14054
+    },
+    "escalated_at": null,
+    "seconds": 45.73571062088013,
+    "handed_off": true,
+    "ticket": "C:\\Projects\\humain-hack\\results\\escalations\\ESC-20261030T174930-186.json",
+    "wrong_actions": 0,
+    "scenario": "unfixable_credentials",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 0
+  },
+  {
+    "recovered": true,
+    "actions": 0,
+    "tokens": 12459,
+    "steps": 6,
+    "verified": false,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "get_logs:backend",
+      "config_changes",
+      "get_logs:db",
+      "db_status",
+      "escalate"
+    ],
+    "calls": [
+      "service_status",
+      "get_logs:backend",
+      "config_changes",
+      "get_logs:db",
+      "db_status",
+      "escalate"
+    ],
+    "llm_seconds": 12,
+    "rate_retries": 0,
+    "nudges": 0,
+    "wait_seconds": 0,
+    "models": {
+      "openai/gpt-oss-120b": 12459
+    },
+    "escalated_at": null,
+    "seconds": 47.2089204788208,
+    "handed_off": true,
+    "ticket": "C:\\Projects\\humain-hack\\results\\escalations\\ESC-20261030T175129-071.json",
+    "wrong_actions": 0,
+    "scenario": "unfixable_credentials",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 1
   }
 ]
