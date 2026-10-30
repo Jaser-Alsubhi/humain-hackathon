@@ -107,7 +107,7 @@ Built during the event: the orders pipeline and intake journal, the silent data 
 - Most scenarios were designed knowing their fix, so dev results are easier than unseen faults.
 - Repeats are small (3 to 5), so results show stability, not statistical rates. The held-out set is the broader test.
 - The ledger in the sync scenario lives in the same database, so it is a simulated replica.
-- The Break it button runs the real agent on a small shared server, so it is limited to 5 runs per visitor per hour and 25 per day, one at a time, with a kill switch. Each of its five faults was run once live, which shows the chain works, not a rate. The recorded replay is always available.
+- The Break it button runs the real agent on a small shared server, so it is limited to 3 runs per visitor per hour and 25 per day, one at a time, with a kill switch. Each of its five faults was run once live, which shows the chain works, not a rate. The recorded replay is always available.
 - The queue is a table and a worker thread in the same database, not a message broker.
 - The monitor detects silent faults only through the data checks (orders, payments, the ledger and the queue). A silent fault elsewhere would not be seen.
 - Latency of 80 to 200 seconds on some runs is mostly provider rate limiting (5 requests a minute), not compute.
