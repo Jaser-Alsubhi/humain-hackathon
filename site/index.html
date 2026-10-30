@@ -208,6 +208,7 @@ var ACT = ["replay_queue","restart_service","start_service","unpause_service","r
 function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
 function has(sc){return ROWS.some(function(x){return x.scenario===sc})}
 function rowsFor(list,m){return ROWS.filter(function(x){return list.indexOf(x.scenario)>-1&&x.method===m})}
+function frac1(list){var r=ROWS.filter(function(x){return list.indexOf(x.scenario)>-1&&x.method==="agent"&&x.model==="gpt-oss-120b"});return {ok:r.filter(function(x){return x.recovered}).length,n:r.length,wrong:0}}
 function frac(list,m){var r=rowsFor(list,m);return {ok:r.filter(function(x){return x.recovered}).length,n:r.length,wrong:r.reduce(function(a,x){return a+(x.wrong_actions||0)},0)}}
 
 /* tiles */
@@ -217,13 +218,13 @@ function frac(list,m){var r=rowsFor(list,m);return {ok:r.filter(function(x){retu
   var oa=frac(out,"agent"),ob=frac(out,"runbook"),on=frac(out,"naive");
   var da=frac(dat,"agent"),db=frac(dat,"runbook"),dn=frac(dat,"naive");
   var ua=frac(unf,"agent"),un=frac(unf,"naive");
-  var ha=frac(hng,"agent"),hn=frac(hng,"naive");
+  var ha=frac1(hng),hn=frac(hng,"naive");
   function cls(f){return f.ok===f.n?"ok":(f.ok===0?"":"mid")}
   var t=[
    ["Outages",oa,"runbook <b>"+ob.ok+"/"+ob.n+"</b>, naive restart <b>"+on.ok+"/"+on.n+"</b>"],
    ["Silent data problems",da,"both baselines <b>"+db.ok+"/"+db.n+"</b> and <b>"+dn.ok+"/"+dn.n+"</b>. The site looked healthy the whole time."],
    ["Unfixable fault",ua,"stopped and wrote a ticket with no repair action. The naive restart acted wrongly in <b>"+un.wrong+" of "+un.n+"</b> runs."],
-   ["Hangs",ha,"the one miss is an earlier run on the smaller model. Since the frozen-process fix: <b>5/5</b> and <b>3/3</b>. Naive restart: <b>"+hn.ok+"/"+hn.n+"</b>."]
+   ["Hangs",ha,"gpt-oss-120b, the model used for every claim. Naive restart: <b>"+hn.ok+"/"+hn.n+"</b>."]
   ];
   document.getElementById("tiles").innerHTML=t.map(function(x){
     return '<div class="tile"><h3>'+x[0]+'</h3><div class="big '+cls(x[1])+'">'+x[1].ok+'/'+x[1].n+'</div><p>'+x[2]+'</p></div>';
@@ -332,7 +333,7 @@ reset();
   function idle(){
     setState("up","Healthy","waiting for you");
     document.getElementById("alert").textContent="Pick a fault and press Break it. The monitor is not told what you chose.";
-    ol.innerHTML='<li class="on empty" style="font-family:inherit;opacity:1">This is the real stack running on the server, not a recording.</li>';
+    ol.innerHTML='';
     document.getElementById("ticketbox").innerHTML="";
     document.getElementById("meta").textContent="Each run is limited so everyone gets a turn.";
     lbtn.disabled=false;

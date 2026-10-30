@@ -45,7 +45,7 @@ JS = r"""/*LIVE-JS*/
   function idle(){
     setState("up","Healthy","waiting for you");
     document.getElementById("alert").textContent="Pick a fault and press Break it. The monitor is not told what you chose.";
-    ol.innerHTML='<li class="on empty" style="font-family:inherit;opacity:1">This is the real stack running on the server, not a recording.</li>';
+    ol.innerHTML='';
     document.getElementById("ticketbox").innerHTML="";
     document.getElementById("meta").textContent="Each run is limited so everyone gets a turn.";
     lbtn.disabled=false;
