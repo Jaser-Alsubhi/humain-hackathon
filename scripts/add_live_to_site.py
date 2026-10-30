@@ -119,7 +119,7 @@ OLD_FOOT = ('<footer><span>Built for the Misk x HUMAIN Future AI Builders Hackat
             '<span>Jaser Alsubhi, solo participant.</span><span>Demo video, GitHub and slides: added at submission.</span></footer>')
 EMAIL = "JaserAlsubhi0@gmail.com"
 FOOT = ("<!--LIVE-FOOT--><footer class=\"foot\"><div class=\"foot-bar\"><span>&copy; 2026 Jaser Alsubhi</span>"
-        "<span>Misk x HUMAIN Future AI Builders Hackathon, Challenge 1</span></div></footer><!--END-LIVE-FOOT-->")
+        "<span>Misk x HUMAIN Future AI Builders Hackathon</span></div></footer><!--END-LIVE-FOOT-->")
 
 
 def strip(html):
