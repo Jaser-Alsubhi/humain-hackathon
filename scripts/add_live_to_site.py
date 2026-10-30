@@ -31,8 +31,8 @@ JS = r"""/*LIVE-JS*/
 (function(){
   var modes=document.querySelectorAll("#modes button"),rbar=document.getElementById("sc").parentNode,lbar=document.getElementById("livebar");
   var lsel=document.getElementById("lsc"),lbtn=document.getElementById("lbreak"),ol=document.getElementById("steps");
-  var SHORT={db_down:"Database stops",bad_config:"Bad config deployed",hung_backend:"Backend freezes",silent_drop_payments:"Payments silently lost",sync_corruption:"Sync job corrupts data"};
-  var HINT={db_down:"The site goes down. A restart alone would not be the right first move.",bad_config:"The backend fails after a config change. The fix is to roll the change back.",hung_backend:"Docker still says the backend is running, but its process is frozen.",silent_drop_payments:"Orders are accepted and /ready stays green, but payments are not stored.",sync_corruption:"The site looks healthy while a sync job quietly turns correct records wrong."};
+  var SHORT={db_down:"Database stops",bad_config:"Bad config deployed",hung_backend:"Backend freezes",silent_drop_payments:"Payments silently lost",sync_corruption:"Sync job corrupts data",queue_overflow:"Queue loses messages"};
+  var HINT={db_down:"The site goes down. A restart alone would not be the right first move.",bad_config:"The backend fails after a config change. The fix is to roll the change back.",hung_backend:"Docker still says the backend is running, but its process is frozen.",silent_drop_payments:"Orders are accepted and /ready stays green, but payments are not stored.",sync_corruption:"The site looks healthy while a sync job quietly turns correct records wrong.",queue_overflow:"A traffic spike hits a queue whose settings drop messages when it is full. Everything is accepted, much is lost."};
   var lhint=document.getElementById("lhint");
   var live=false,since=0,pollT=null,available=false,busy=false,labels={};
   function show(m){
@@ -51,7 +51,7 @@ JS = r"""/*LIVE-JS*/
     lbtn.disabled=false;
     poll(true);
   }
-  var DOES=ACT.concat(["restore_sync_job","resync_ledger"]);
+  var DOES=ACT.concat(["restore_sync_job","resync_ledger","replay_queue"]);
   function tag(t){var nm=t.split("(")[0],a=DOES.indexOf(nm)>-1,e=nm==="escalate";return e?'<span class="t esc">hands off</span>':(a?'<span class="t act">changes system</span>':'<span class="t">reads</span>')}
   function line(txt){
     var m=/^\s*\d+\.\s+([a-z_]+)\((.*?)\)\s+->\s+(.*)$/.exec(txt);

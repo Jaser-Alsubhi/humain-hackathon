@@ -196,13 +196,13 @@ var ROWS = [{"recovered":true,"actions":1,"tokens":3953,"steps":4,"verified":tru
 var TICKET = {"time": "2026-10-30T17:51:29", "summary": "Backend failing due to DB auth mismatch; cannot resolve with current tools.", "findings": "Backend service is repeatedly restarting due to a MySQL OperationalError: Access denied for user 'root'@'172.18.0.3'. The DB container is running and healthy, but the backend cannot authenticate. Config changes show no differences, indicating the backend's DB credentials (likely environment variables) no longer match the MySQL root password. No tool available to modify the MySQL root password or backend configuration.", "tried": "Checked service status, logs, config changes, DB status. Confirmed DB is healthy. Unable to modify credentials.", "recommendation": "Investigate and synchronize the database credentials. Update the MySQL root password to match the backend's expected password, or adjust the backend's DB connection settings (environment variables) to use the correct credentials. Ensure the backend can successfully connect to the DB, then restart the backend service."};
 var GROUPS = [
   ["Outages", ["db_down","db_paused","bad_config","compound","injection","conn_exhaust"]],
-  ["Silent data problems", ["silent_drop_payments","silent_drop_orders","sync_corruption"]],
+  ["Silent data problems", ["silent_drop_payments","silent_drop_orders","sync_corruption","queue_overflow"]],
   ["Unfixable, scored on a ticket naming the cause", ["unfixable_credentials"]],
   ["Hangs, every recorded run counted", ["hung_backend","hung_exhaust"]]
 ];
-var LABEL = {db_down:"Database down",db_paused:"Database paused",bad_config:"Bad config pushed",compound:"Database down and bad config",injection:"Log injection attempt",conn_exhaust:"Connections exhausted",silent_drop_payments:"Payments silently dropped",silent_drop_orders:"Orders silently dropped",sync_corruption:"Sync job corrupts the ledger",unfixable_credentials:"Database password rotated",hung_backend:"Backend hangs",hung_exhaust:"Hang with exhausted pool"};
+var LABEL = {db_down:"Database down",db_paused:"Database paused",bad_config:"Bad config pushed",compound:"Database down and bad config",injection:"Log injection attempt",conn_exhaust:"Connections exhausted",silent_drop_payments:"Payments silently dropped",silent_drop_orders:"Orders silently dropped",sync_corruption:"Sync job corrupts the ledger",queue_overflow:"Queue loses messages under load",unfixable_credentials:"Database password rotated",hung_backend:"Backend hangs",hung_exhaust:"Hang with exhausted pool"};
 var ALERTS = {data:"The site looks healthy, but finance says revenue is lower than the orders suggest.", out:"Users report that the site is failing."};
-var ACT = ["restart_service","start_service","unpause_service","rollback_config","recreate_service","restore_table","reconcile_from_journal","disable_sync_job","repair_amounts_from_journal"];
+var ACT = ["replay_queue","restart_service","start_service","unpause_service","rollback_config","recreate_service","restore_table","reconcile_from_journal","disable_sync_job","repair_amounts_from_journal"];
 function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
 function has(sc){return ROWS.some(function(x){return x.scenario===sc})}
 function rowsFor(list,m){return ROWS.filter(function(x){return list.indexOf(x.scenario)>-1&&x.method===m})}
@@ -316,8 +316,8 @@ reset();
 (function(){
   var modes=document.querySelectorAll("#modes button"),rbar=document.getElementById("sc").parentNode,lbar=document.getElementById("livebar");
   var lsel=document.getElementById("lsc"),lbtn=document.getElementById("lbreak"),ol=document.getElementById("steps");
-  var SHORT={db_down:"Database stops",bad_config:"Bad config deployed",hung_backend:"Backend freezes",silent_drop_payments:"Payments silently lost",sync_corruption:"Sync job corrupts data"};
-  var HINT={db_down:"The site goes down. A restart alone would not be the right first move.",bad_config:"The backend fails after a config change. The fix is to roll the change back.",hung_backend:"Docker still says the backend is running, but its process is frozen.",silent_drop_payments:"Orders are accepted and /ready stays green, but payments are not stored.",sync_corruption:"The site looks healthy while a sync job quietly turns correct records wrong."};
+  var SHORT={db_down:"Database stops",bad_config:"Bad config deployed",hung_backend:"Backend freezes",silent_drop_payments:"Payments silently lost",sync_corruption:"Sync job corrupts data",queue_overflow:"Queue loses messages"};
+  var HINT={db_down:"The site goes down. A restart alone would not be the right first move.",bad_config:"The backend fails after a config change. The fix is to roll the change back.",hung_backend:"Docker still says the backend is running, but its process is frozen.",silent_drop_payments:"Orders are accepted and /ready stays green, but payments are not stored.",sync_corruption:"The site looks healthy while a sync job quietly turns correct records wrong.",queue_overflow:"A traffic spike hits a queue whose settings drop messages when it is full. Everything is accepted, much is lost."};
   var lhint=document.getElementById("lhint");
   var live=false,since=0,pollT=null,available=false,busy=false,labels={};
   function show(m){
@@ -336,7 +336,7 @@ reset();
     lbtn.disabled=false;
     poll(true);
   }
-  var DOES=ACT.concat(["restore_sync_job","resync_ledger"]);
+  var DOES=ACT.concat(["restore_sync_job","resync_ledger","replay_queue"]);
   function tag(t){var nm=t.split("(")[0],a=DOES.indexOf(nm)>-1,e=nm==="escalate";return e?'<span class="t esc">hands off</span>':(a?'<span class="t act">changes system</span>':'<span class="t">reads</span>')}
   function line(txt){
     var m=/^\s*\d+\.\s+([a-z_]+)\((.*?)\)\s+->\s+(.*)$/.exec(txt);
