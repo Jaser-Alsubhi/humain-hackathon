@@ -187,7 +187,10 @@ class Guard:
             return "blocked: step budget exhausted", True
         if (self.reserve and name not in self.actions and name not in self.always
                 and self.steps >= self.max_steps - self.reserve):
-            return "blocked: the last %d steps are reserved for an action or check_health" % self.reserve, True
+            allowed_now = ", ".join(sorted(set(self.actions) | set(self.always)))
+            return ("blocked: investigation is closed, the last %d steps are reserved. "
+                    "Choose one of: %s. If none of these can fix it, call escalate."
+                    % (self.reserve, allowed_now)), True
         fn = self.registry[name]
         if name in self.actions and self.action_count >= self.max_actions:
             return "blocked: action budget exhausted", True
