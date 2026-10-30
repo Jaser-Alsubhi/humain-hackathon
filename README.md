@@ -21,7 +21,7 @@ Every run saved in the results file is counted, failures included. The file keep
 
 - Naive restart: restart the backend and hope. Fixed runbook: scripted rules (start stopped containers, unpause paused ones, roll back a changed config).
 - Agent model: gpt-oss-120b on Cerebras (an earlier phase used the same model on Groq). A smaller model, gpt-oss-20b, was tried on some faults and is counted separately in the results file.
-- Held-out result on the frozen final code: pending, and it is run once.
+- Held-out result (12 unseen generated fault combinations, evaluated once on the frozen code `f32c07b`): agent 10/12, fixed runbook 10/12, naive restart 1/12. The agent made 6 wrong actions in 4 runs and the runbook made none. Details are in `docs/REPORT.md` and `docs/EVIDENCE.md`.
 
 ## The five problems from the brief
 
@@ -33,7 +33,7 @@ Every run saved in the results file is counted, failures included. The file keep
 | A workflow that hangs forever | A frozen backend that Docker still reports as running | Agent 5/5 and 3/3 in dev |
 | A repair agent that never escalates | A fault no tool can fix, so the agent must hand over with a ticket | Agent 2/2 in dev |
 
-All of these are development results. The held-out run is the unbiased one.
+All of these are development results. On the held-out run of 12 unseen generated faults the agent ties the runbook (10/12 each). The agent's advantage is on problems no runbook can fix, such as the five above.
 
 ## Quick start
 
@@ -84,7 +84,7 @@ alert -> investigate (logs, health, process state, data checks) -> choose the le
 - Baselines come first, and results are saved after every trial.
 - A **wrong action** is any executed action outside the scenario's known correct fix set.
 - The fuzzer's held-out split is locked in `results/fuzz_manifest.json` and is evaluated once.
-- Scenarios were designed knowing their fixes, so dev results show behaviour, not an unbiased test. The held-out run is the unbiased one.
+- Scenarios were designed knowing their fixes, so dev results show behaviour, not an unbiased test. The held-out run (12 faults, run once) is the unbiased one, and there the agent only ties the runbook.
 
 ## Layout
 
@@ -105,7 +105,7 @@ Built during the event: the orders pipeline and intake journal, the silent data 
 
 - The agent's strength comes partly from purpose-built tools for each fault family. A fault outside those families needs new tools or ends in escalation.
 - Most scenarios were designed knowing their fix, so dev results are easier than unseen faults.
-- Repeats are small (3 to 5), so results show stability, not statistical rates. The held-out set is the broader test.
+- Repeats are small (3 to 5), so results show stability, not statistical rates. The held-out set has 12 faults with one run each, so 10/12 is a small sample too.
 - The ledger in the sync scenario lives in the same database, so it is a simulated replica.
 - The Break it button runs the real agent on a small shared server, so it is limited to 3 runs per visitor per hour and 25 per day, one at a time, with a kill switch. Each of its five faults was run once live, which shows the chain works, not a rate. The recorded replay is always available.
 - The queue is a table and a worker thread in the same database, not a message broker.

@@ -31,7 +31,7 @@ Misk x HUMAIN Future AI Builders Hackathon, Challenge 1. Solo entry. Numbers com
 | Hangs | 1/4 | 0/4 | **8/9** | 0 | 14,204 |
 <!-- RESULTS:END -->
 
-**Held-out result, evaluated once on the frozen final code:** pending. Commit: pending.
+**Held-out result, evaluated once on the frozen final code (commit `f32c07b`, 12 generated fault combinations, one run each):** agent 10/12, fixed runbook 10/12, naive restart 1/12. Wrong actions: agent 6 (in 4 runs), runbook 0, naive 12. The agent missed `fz-b56b2d` (database connections exhausted plus a wrong password) and `fz-de4c32` (paused containers plus a changed password). The runbook missed `fz-b56b2d` and `fz-ca6865`. On generic infrastructure faults the agent therefore matches a hand-written runbook but costs more (24,189 tokens and 89 s on average) and acts wrongly more often. Its advantage is on the problems a runbook cannot handle. Per-fault detail is in `docs/EVIDENCE.md`.
 
 Baselines first, always. The naive restart fixes almost nothing because most faults are not "restart the backend". The scripted runbook solves the outages it has rules for (15 of 18 core runs) and nothing in the silent-data, unfixable or hang families, because no container is down and no config changed.
 
@@ -82,7 +82,7 @@ Baselines first, always. The naive restart fixes almost nothing because most fau
 
 ## 7. Limitations and next steps
 
-1. **Held-out performance** is the unbiased number, and it is pending. Dev scenarios were designed knowing their fixes.
+1. **Held-out performance** is the unbiased number: 10/12, level with the runbook, with 6 wrong actions. The held-out set is 12 faults with one run each, so it is a small sample. Dev scenarios were designed knowing their fixes.
 2. **The queue is a simulation.** It is a table and a worker thread in the same database, not a message broker, and the fault was designed knowing the fix.
 3. **Hangs.** The fix was made after seeing the failures and depends on the frozen-process tool, and the plain freeze is also fixed by a blanket restart.
 4. **Tool coverage.** New fault families need new tools. A more general tool set (or a sandboxed shell with review) would widen coverage.

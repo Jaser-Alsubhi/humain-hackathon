@@ -20,7 +20,7 @@ How the agent got there: check_invariants showed the missing records, probe_writ
 Limits
 - 3 repeats, not 5, to protect the daily token allowance.
 - The agent runs at temperature 0, so repeats show stability, not independent trials.
-- Dev scenarios, not held-out.
+- Dev scenarios, not held-out. The held-out run is in section #7.
 - Recovery relies on the intake journal. If the journal were lost, the data could not be restored.
 
 ## #5 Escalation: unfixable credential rotation
@@ -138,3 +138,32 @@ On `hung_backend` every run took one action, the restart of the backend, with ne
 - Detection of silent faults depends on the journal and the data checks, which only cover orders, payments, the ledger and the queue. A silent fault elsewhere would not be seen.
 - The live button is limited to 3 runs per visitor per hour and 25 per day, one at a time, with a kill switch. The live agent uses a shared provider key and a small shared VM.
 
+
+
+## #7 Held-out run: 12 unseen generated faults
+
+**What was run.** `python -m recovery.evaluate --set heldout --methods agent --repeats 1`, once, on the frozen code (commit `f32c07b`). The 12 faults come from a locked fuzzer manifest (`results/fuzz_manifest.json`, seed 20261030). The baselines were run on the same 12 faults earlier. No fault was rerun and no code changed after the run.
+
+| Fault | Combination | Naive | Runbook | Agent (wrong actions) |
+|---|---|---|---|---|
+| fz-b56b2d | connections exhausted + wrong password | no | no | no (0), 203 s |
+| fz-e60897 | backend paused | yes | yes | yes (1), 8 s |
+| fz-ca6865 | connections exhausted + backend stopped | no | no | yes (0), 123 s |
+| fz-10ec16 | password rotated | no | yes | yes (0), 10 s |
+| fz-dc3a0d | database paused + password rotated + backend paused | no | yes | yes (2), 202 s |
+| fz-fef3cc | host name changed + backend stopped | no | yes | yes (0), 29 s |
+| fz-5521c4 | database name changed + backend stopped | no | yes | yes (0), 24 s |
+| fz-91e410 | database paused + backend paused | no | yes | yes (0), 20 s |
+| fz-bb3ac9 | database stopped + wrong password | no | yes | yes (0), 33 s |
+| fz-0b3410 | database stopped + database name changed + backend paused | no | yes | yes (1), 50 s |
+| fz-e911d2 | database stopped + database name changed | no | yes | yes (0), 35 s |
+| fz-de4c32 | database paused + password changed + backend paused | no | yes | no (2), 331 s |
+
+**Totals.** Agent 10/12 and 6 wrong actions (in 4 runs). Runbook 10/12 and 0. Naive 1/12 and 12. The agent used 24,189 tokens per run on average (7,384 to 42,399) and took 89 s on average (most runs took about 35 s or less). The agent itself verified recovery in 8 of 12 runs.
+
+**What this shows.** The agent does not beat the scripted runbook on generic infrastructure faults: both recover 10 of 12. Two of the agent's four weaker runs were misses (`fz-b56b2d`, `fz-de4c32`) and two recovered with extra or unneeded actions (`fz-dc3a0d`, `fz-0b3410`). In `fz-de4c32` the agent unpaused both containers, then restarted and recreated the backend without ever calling the config-changes tool, and the runbook fixed the same fault in 6 s. Its value is on the five problems in this document, where the runbook scores 0.
+
+**Limits and a disclosure.**
+- 12 faults with one run each is a small sample, and temperature 0 means a rerun would likely repeat these results.
+- Docker Desktop reported a full disk on the laptop at about the time the last faults ran, because of a large unrelated download. The results table shows 0 infrastructure errors, so every run is counted as it is. The saved step lists hold only tool names, not tool output, so they cannot show whether Docker was failing during a run. I cannot rule out that the disk problem slowed `fz-de4c32` (331 s, the longest run).
+- The fault combinations include families the agent saw in dev (host name, password, database name, pauses, exhaustion), but not these exact combinations.
