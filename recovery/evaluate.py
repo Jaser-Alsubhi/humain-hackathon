@@ -8,7 +8,7 @@ import sys
 import time
 from pathlib import Path
 
-from recovery import agent, baseline, scenarios
+from recovery import agent, baseline, scenarios, silent
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results" / "recovery_eval.json"
@@ -60,6 +60,8 @@ def trial(name, method):
                  "sequence": a["executed"], "calls": a["sequence"], "llm_seconds": round(a["llm_seconds"]),
                  "rate_retries": a["rate_retries"], "nudges": a.get("nudges", 0), "wait_seconds": a.get("wait_seconds", 0),
                  "models": a.get("models", {}), "escalated_at": a.get("escalated_at"), "seconds": t if t is not None else a["seconds"]}
+        if name in silent.TARGET and method != "agent":
+            r["recovered"] = silent.healthy()
         r["wrong_actions"] = len(wrong_actions(name, r.get("sequence", [])))
     except Exception as e:
         r = {"recovered": False, "actions": 0, "seconds": 0, "error": type(e).__name__, "detail": agent.redact(str(e))[:500]}
@@ -104,6 +106,8 @@ def main():
     if split == "extra":
         from recovery import faults_extra
         names = faults_extra.names()
+    elif split == "silent":
+        names = silent.names()
     elif split:
         from recovery import fuzz
         names = fuzz.ids(split)

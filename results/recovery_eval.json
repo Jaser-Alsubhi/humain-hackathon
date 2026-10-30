@@ -1872,5 +1872,149 @@
     "method": "runbook",
     "model": "-",
     "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 3.631608486175537,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "silent_drop_payments",
+    "method": "naive",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 3.3915855884552,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "silent_drop_payments",
+    "method": "naive",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 3.4067108631134033,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "silent_drop_payments",
+    "method": "naive",
+    "model": "-",
+    "run": 2
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 0.28021740913391113,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "silent_drop_payments",
+    "method": "runbook",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 0.28000402450561523,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "silent_drop_payments",
+    "method": "runbook",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 0.2671213150024414,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "silent_drop_payments",
+    "method": "runbook",
+    "model": "-",
+    "run": 2
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 3.3318865299224854,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "silent_drop_orders",
+    "method": "naive",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 3.400892734527588,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "silent_drop_orders",
+    "method": "naive",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "seconds": 3.312074899673462,
+    "sequence": [
+      "restart_service:backend"
+    ],
+    "wrong_actions": 1,
+    "scenario": "silent_drop_orders",
+    "method": "naive",
+    "model": "-",
+    "run": 2
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 0.2685277462005615,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "silent_drop_orders",
+    "method": "runbook",
+    "model": "-",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 0.2734389305114746,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "silent_drop_orders",
+    "method": "runbook",
+    "model": "-",
+    "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 0.27754902839660645,
+    "sequence": [],
+    "wrong_actions": 0,
+    "scenario": "silent_drop_orders",
+    "method": "runbook",
+    "model": "-",
+    "run": 2
   }
 ]

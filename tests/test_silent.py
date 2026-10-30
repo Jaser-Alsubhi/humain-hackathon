@@ -1,6 +1,6 @@
 import pytest
 
-from recovery import scenarios, silent
+from recovery import agent, scenarios, silent
 
 
 def test_scenarios_know_the_silent_faults():
@@ -49,3 +49,32 @@ def test_run_sql_keeps_the_tab_of_a_final_empty_value(monkeypatch):
     monkeypatch.setattr(silent.subprocess, "run", lambda *a, **k: Done())
     rc, out = silent.run_sql("SELECT 1")
     assert silent._rows(out) == {"journal": "3", "sample_payments_missing": ""}
+
+
+def test_agent_has_the_data_tools_and_marks_the_changing_ones_as_actions():
+    names = {t["function"]["name"] for t in agent.TOOLS}
+    assert {"check_invariants", "probe_writes", "table_info", "restore_table", "reconcile_from_journal"} <= names
+    assert {"restore_table", "reconcile_from_journal"} <= agent.ACT
+    assert not {"check_invariants", "probe_writes", "table_info"} & agent.ACT
+    assert names <= set(agent.REGISTRY)
+    assert "check_invariants" in agent.SYSTEM
+
+
+def test_table_tools_only_accept_the_two_tables():
+    for t in agent.TOOLS:
+        if t["function"]["name"] in ("table_info", "restore_table"):
+            assert t["function"]["parameters"]["properties"]["table"]["enum"] == list(silent.TABLES)
+
+
+def test_data_actions_are_guarded_and_dry_run_touches_nothing():
+    guard = agent.Guard(agent.REGISTRY, agent.ACT, dry_run=True)
+    text, blocked = guard.dispatch("restore_table", {"table": "payments"})
+    assert text.startswith("dry-run") and not blocked
+    assert guard.action_count == 1
+
+
+def test_action_labels_include_the_table_and_alerts_differ():
+    assert agent._label("restore_table", {"table": "payments"}) == "restore_table:payments"
+    assert agent._label("restart_service", {"service": "db"}) == "restart_service:db"
+    assert agent._label("reconcile_from_journal", {}) == "reconcile_from_journal"
+    assert agent.ALERT_DATA != agent.ALERT
