@@ -2432,5 +2432,71 @@
     "method": "agent",
     "model": "gpt-oss-120b",
     "run": 1
+  },
+  {
+    "recovered": false,
+    "actions": 0,
+    "seconds": 0,
+    "error": "RateLimitError",
+    "detail": "Error code: 429 - Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m6213dgke4hraznsnq4g6b4s` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 194956, Requested 5670. Please try again in 4m30.432s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing",
+    "scenario": "hung_exhaust",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 0
+  },
+  {
+    "recovered": false,
+    "actions": 1,
+    "tokens": 38548,
+    "steps": 12,
+    "verified": false,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "check_health",
+      "get_logs:backend",
+      "get_logs:db",
+      "get_logs:backend",
+      "db_status",
+      "config_changes",
+      "get_metrics",
+      "db_status",
+      "get_logs:db",
+      "restart_service:backend",
+      "check_health"
+    ],
+    "calls": [
+      "service_status",
+      "check_health",
+      "get_logs:backend",
+      "get_logs:db",
+      "get_logs:backend",
+      "db_status",
+      "config_changes",
+      "get_metrics",
+      "db_status",
+      "get_logs:db",
+      "restart_service:backend",
+      "check_health",
+      "get_logs:backend",
+      "restart_service:db",
+      "restart_service:db"
+    ],
+    "llm_seconds": 190,
+    "rate_retries": 9,
+    "nudges": 0,
+    "wait_seconds": 157,
+    "models": {
+      "openai/gpt-oss-20b": 38548
+    },
+    "escalated_at": null,
+    "seconds": 236.7350890636444,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "hung_exhaust",
+    "method": "agent",
+    "model": "gpt-oss-20b",
+    "run": 0
   }
 ]
