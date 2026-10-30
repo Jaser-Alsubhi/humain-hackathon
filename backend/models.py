@@ -47,3 +47,33 @@ class JournalEntry(Base):
     order_ref: Mapped[str] = mapped_column(String(64), unique=True)
     amount_cents: Mapped[int] = mapped_column(Integer)
     created: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class QueueMessage(Base):
+    """A message waiting for the worker. Bounded by QUEUE_MAX_DEPTH."""
+    __tablename__ = "queue_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    msg_ref: Mapped[str] = mapped_column(String(64), unique=True)
+    amount_cents: Mapped[int] = mapped_column(Integer)
+    created: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class QueueDone(Base):
+    """A message the worker has processed. Unique by msg_ref, so replays cannot be processed twice."""
+    __tablename__ = "queue_done"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    msg_ref: Mapped[str] = mapped_column(String(64), unique=True)
+    amount_cents: Mapped[int] = mapped_column(Integer)
+    processed: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class QueueJournal(Base):
+    """Append-only intake log for queue messages, written before the queue. The source of truth for replays."""
+    __tablename__ = "queue_journal"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    msg_ref: Mapped[str] = mapped_column(String(64), unique=True)
+    amount_cents: Mapped[int] = mapped_column(Integer)
+    created: Mapped[datetime] = mapped_column(DateTime, default=_now)

@@ -22,8 +22,8 @@ CONFIG_TEMPLATE = """services:
 """
 
 
-def config_text(host="db", version="good", note=""):
-    text = CONFIG_TEMPLATE.format(host=host, version=version)
+def config_text(host="db", version="good", note="", extra=""):
+    text = CONFIG_TEMPLATE.format(host=host, version=version) + extra
     return ("# " + note + "\n" + text) if note else text
 
 

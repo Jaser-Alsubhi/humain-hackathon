@@ -35,6 +35,8 @@ SYSTEM = (
 ALERT = "ALERT: users report that the site is failing. Investigate and fix it."
 ALERT_SYNC = ("ALERT: the site looks healthy, but finance reports that the ledger totals no longer match the orders. "
               "Investigate and fix it.")
+ALERT_QUEUE = ("ALERT: the site looks healthy, but support says some messages sent during a traffic spike never arrived. "
+               "Investigate and fix it.")
 ALERT_DATA = ("ALERT: the site looks healthy, but finance reports that revenue is lower than the number of orders suggests. "
               "Investigate and fix it.")
 
@@ -80,6 +82,10 @@ TOOLS = [
     _tool("restore_sync_job", "ACTION. Replace the installed sync job with the standard one, which copies each new order into the "
           "ledger unchanged, and removes any other trigger that touches the ledger. It does not repair ledger rows that are already wrong."),
     _tool("resync_ledger", "ACTION. Make every ledger row match its order: correct wrong amounts and add missing rows."),
+    _tool("queue_status", "Show the message queue: messages journaled, still waiting, processed and lost, and the queue settings "
+          "(what happens when it is full, how deep it may grow, how slow the worker is)."),
+    _tool("replay_queue", "ACTION. Put every journaled message that is neither queued nor processed back on the queue, "
+          "under the settings that are active now."),
     _tool("escalate", "Hand the incident to a human. Use it when the root cause is outside what your tools can change, "
           "or when every safe action that addresses it has failed. Say what you found, what you tried and what a human should do. "
           "This ends your work on the incident.",
@@ -88,7 +94,7 @@ TOOLS = [
 ]
 
 ACT = {"restart_service", "start_service", "unpause_service", "rollback_config", "recreate_service",
-       "restore_table", "reconcile_from_journal", "restore_sync_job", "resync_ledger"}
+       "restore_table", "reconcile_from_journal", "restore_sync_job", "resync_ledger", "replay_queue"}
 
 
 def _check_health(wait_seconds=0):
@@ -118,6 +124,8 @@ REGISTRY = {
     "list_sync_jobs": silent.list_sync_jobs,
     "restore_sync_job": silent.restore_sync_job,
     "resync_ledger": silent.resync_ledger,
+    "queue_status": silent.queue_status,
+    "replay_queue": silent.replay_queue,
     "escalate": escalation.escalate,
 }
 
@@ -328,7 +336,8 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
         return True
 
     msgs = [{"role": "system", "content": SYSTEM},
-            {"role": "user", "content": alert or ((ALERT_SYNC if scenario == silent.SYNC else ALERT_DATA)
+            {"role": "user", "content": alert or ((ALERT_SYNC if scenario == silent.SYNC else
+                                                   ALERT_QUEUE if scenario == silent.QUEUE else ALERT_DATA)
                                                    if scenario in silent.TARGET else ALERT)}]
     is_data = (scenario in silent.TARGET) if data_mode is None else bool(data_mode)
     started = time.time()

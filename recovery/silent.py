@@ -8,6 +8,8 @@ import json
 import re
 import subprocess  # nosec B404
 import sys
+import time
+import urllib.error
 import urllib.request
 
 from recovery import ops
@@ -19,6 +21,12 @@ SEED, LOST = 20, 15
 PROBE = "__probe__"
 SYNC = "sync_corruption"
 TARGET[SYNC] = "ledger"
+QUEUE = "queue_overflow"
+TARGET[QUEUE] = "queue"
+QSEED, QSPIKE = 20, 40
+# The fault: a deploy that turns the full-queue policy from reject to drop, shrinks the queue and slows the worker.
+QUEUE_FAULT = ('      QUEUE_OVERFLOW: "drop"\n      QUEUE_MAX_DEPTH: "10"\n      WORKER_DELAY_MS: "2000"\n')
+QUEUE_TABLES = ("queue_journal", "queue_messages", "queue_done")
 LEDGER_TABLE = ("CREATE TABLE ledger (id INT AUTO_INCREMENT PRIMARY KEY, order_ref VARCHAR(64) NOT NULL, "
                 "amount_cents INT NOT NULL, created DATETIME NULL, KEY ix_ledger_ref (order_ref));")
 _SYNC_HEAD = "CREATE TRIGGER sync_job AFTER INSERT ON orders FOR EACH ROW INSERT INTO ledger (order_ref, amount_cents, created) "
@@ -40,6 +48,8 @@ def names():
 def correct(name):
     if name == SYNC:
         return {"restore_sync_job", "resync_ledger"}
+    if name == QUEUE:
+        return {"rollback_config", "replay_queue"}
     return {"restore_table:" + TARGET[name], "reconcile_from_journal"}
 
 
@@ -72,6 +82,58 @@ def _missing(t):
 def ledger_exists():
     rc, out = run_sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'hackdb' AND table_name = 'ledger';")
     return rc == 0 and out.strip() == "1"
+
+
+def queue_exists():
+    rc, out = run_sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'hackdb' "
+                      "AND table_name IN ('queue_journal', 'queue_messages', 'queue_done');")
+    return rc == 0 and out.strip() == "3"
+
+
+def queue_checks():
+    """Compare the queue journal with what is still queued and what the worker has processed."""
+    q = ("SELECT 'queue_journal', COUNT(*) FROM queue_journal;"
+         "SELECT 'queue_pending', COUNT(*) FROM queue_messages;"
+         "SELECT 'queue_done', COUNT(*) FROM queue_done;"
+         "SELECT 'queue_lost', COUNT(*) FROM queue_journal j LEFT JOIN queue_messages m ON m.msg_ref = j.msg_ref "
+         "LEFT JOIN queue_done d ON d.msg_ref = j.msg_ref WHERE m.msg_ref IS NULL AND d.msg_ref IS NULL;")
+    rc, out = run_sql(q)
+    got = _rows(out)
+    if rc != 0 or got is None:
+        return {"error": out[-300:] or "queue query failed"}
+    return {k: int(v) for k, v in got.items()}
+
+
+def queue_status():
+    """Queue depth, how many messages were lost, and the queue settings in the active configuration."""
+    if not queue_exists():
+        return "there is no queue"
+    q = queue_checks()
+    if "error" in q:
+        return q["error"]
+    lines = [x.strip() for x in ops.ACTIVE.read_text(encoding="utf-8").splitlines() if "QUEUE_" in x or "WORKER_" in x]
+    q["configured"] = lines or "defaults: full queue answers 429 (reject), depth 1000, no worker delay"
+    return q
+
+
+def replay_queue():
+    """Offer every journaled message that is neither queued nor processed to the queue again, under the current settings."""
+    try:
+        req = urllib.request.Request(ops.API + "/queue/replay", method="POST")
+        with urllib.request.urlopen(req, timeout=20) as r:  # nosec B310
+            return json.loads(r.read().decode())
+    except Exception as e:
+        return "replay failed: %s" % type(e).__name__
+
+
+def post_message(ref, cents):
+    req = urllib.request.Request(ops.API + "/queue/messages", method="POST", headers={"Content-Type": "application/json"},
+                                 data=json.dumps({"msg_ref": ref, "amount_cents": cents}).encode())
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:  # nosec B310
+            return r.status
+    except urllib.error.HTTPError as e:
+        return e.code
 
 
 def ledger_checks():
@@ -123,6 +185,12 @@ def invariants():
             return {"error": led["error"], "clean": False}
         r.update(led)
         r["clean"] = r["clean"] and not (led["ledger_missing"] or led["ledger_mismatch"])
+    if queue_exists():
+        qs = queue_checks()
+        if "error" in qs:
+            return {"error": qs["error"], "clean": False}
+        r.update(qs)
+        r["clean"] = r["clean"] and not qs["queue_lost"]
     return r
 
 
@@ -229,6 +297,10 @@ def resync_ledger():
 def healthy():
     """The truth for these scenarios: the site is ready AND no data is missing AND every table really stores writes."""
     inv = invariants()
+    end = time.time() + 25
+    while inv.get("queue_pending") and time.time() < end:
+        time.sleep(2)
+        inv = invariants()
     return (ops.http("/ready")[0] == 200 and inv.get("clean") is True
             and all(v == "stored" for v in probe_writes().values()))
 
@@ -236,6 +308,8 @@ def healthy():
 def clean():
     run_sql("DROP TRIGGER IF EXISTS sync_job_bug;DROP TRIGGER IF EXISTS sync_job_drift;DROP TRIGGER IF EXISTS sync_job;DROP TABLE IF EXISTS ledger;ALTER TABLE orders ENGINE=InnoDB;ALTER TABLE payments ENGINE=InnoDB;"
             "TRUNCATE TABLE orders;TRUNCATE TABLE payments;TRUNCATE TABLE order_journal;")
+    if queue_exists():
+        run_sql("TRUNCATE TABLE queue_messages;TRUNCATE TABLE queue_done;TRUNCATE TABLE queue_journal;")
 
 
 def post_order(ref, cents):
@@ -245,11 +319,34 @@ def post_order(ref, cents):
         return r.status
 
 
+def inject_queue():
+    """Seed the queue under good settings, deploy the bad queue settings, then send a traffic spike."""
+    from concurrent.futures import ThreadPoolExecutor
+    good = ops.LKG.read_text(encoding="utf-8")
+    if ops.ACTIVE.read_text(encoding="utf-8") != good:
+        ops.write_config(ops.ACTIVE, good)
+        ops.compose("up", "-d", "--no-deps", "backend")
+        ops.wait_ready(60)
+    for i in range(QSEED):
+        assert post_message("QSEED-%03d" % i, 500 + 3 * i) == 202
+    end = time.time() + 30
+    while (queue_checks().get("queue_pending") or 0) and time.time() < end:
+        time.sleep(1)
+    ops.write_config(ops.ACTIVE, ops.config_text(version="queue-1", extra=QUEUE_FAULT))
+    ops.compose("up", "-d", "--no-deps", "backend")
+    ops.wait_ready(60)
+    with ThreadPoolExecutor(max_workers=QSPIKE) as pool:
+        codes = list(pool.map(lambda i: post_message("QSPIKE-%03d" % i, 900 + 11 * i), range(QSPIKE)))
+    assert set(codes) == {202}, codes
+
+
 def inject(name):
     t = TARGET[name]
     ops.OPS.mkdir(exist_ok=True)
     FLAG.write_text("1", encoding="utf-8")
     clean()
+    if name == QUEUE:
+        return inject_queue()
     if name == SYNC:
         run_sql(LEDGER_TABLE + SYNC_GOOD)
     for i in range(SEED):
@@ -280,7 +377,7 @@ def oracle():
         bad += flag != "OK"
         print("   %-5s %s" % (flag, label))
 
-    for name in [n for n in names() if n != SYNC]:
+    for name in [n for n in names() if n not in (SYNC, QUEUE)]:
         t = TARGET[name]
         print(name)
         clean()
@@ -336,6 +433,37 @@ def oracle():
     restore_sync_job()
     resync_ledger()
     check("restore the job, then resync the ledger, fixes it", healthy())
+    print(QUEUE)
+    scenarios.reset()
+    inject(QUEUE)
+    inv = invariants()
+    check("site still reports ready (the fault is silent)", ops.http("/ready")[0] == 200)
+    check("every message was accepted and journaled (%d of %d)" % (inv.get("queue_journal", 0), QSEED + QSPIKE),
+          inv.get("queue_journal") == QSEED + QSPIKE)
+    check("messages sent during the spike are lost (%d lost)" % inv.get("queue_lost", 0), inv.get("queue_lost", 0) >= 10)
+    check("the site's other data is untouched", inv.get("orders_missing") == 0 and inv.get("payments_missing") == 0)
+    check("the config change that did it is visible", "QUEUE_OVERFLOW" in ops.config_changes())
+    check("the check_invariants verdict is not clean", inv.get("clean") is False)
+    for label, fn in (("naive restart", baseline.naive), ("runbook", baseline.runbook)):
+        scenarios.reset()
+        inject(QUEUE)
+        fn()
+        check("%s does not fix it" % label, healthy(), want=False)
+    scenarios.reset()
+    inject(QUEUE)
+    ops.rollback_config()
+    ops.wait_ready(60)
+    check("rolling back the config alone leaves the lost messages lost", healthy(), want=False)
+    scenarios.reset()
+    inject(QUEUE)
+    replay_queue()
+    check("replaying while the bad settings are active loses them again", healthy(), want=False)
+    scenarios.reset()
+    inject(QUEUE)
+    ops.rollback_config()
+    ops.wait_ready(60)
+    replay_queue()
+    check("roll back the config, then replay, fixes it", healthy())
     clean()
     scenarios.reset()
     print("ORACLE", "PASS" if not bad else "%d CHECK" % bad)

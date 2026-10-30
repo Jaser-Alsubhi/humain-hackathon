@@ -10,7 +10,7 @@ from recovery import agent, escalation, ops, silent
 
 CONFIRM = 2        # consecutive failing checks before the agent starts, so a restart in progress is not an incident
 MAX_ATTEMPTS = 2   # agent attempts per incident, then the monitor leaves it to a human
-DATA_KEYS = ("orders_missing", "payments_missing", "amount_mismatch", "ledger_missing", "ledger_mismatch")
+DATA_KEYS = ("orders_missing", "payments_missing", "amount_mismatch", "ledger_missing", "ledger_mismatch", "queue_lost")
 
 
 def sense():

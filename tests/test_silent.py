@@ -5,7 +5,7 @@ from recovery import agent, scenarios, silent
 
 def test_scenarios_know_the_silent_faults():
     for name, table in silent.TARGET.items():
-        if name == silent.SYNC:
+        if name in (silent.SYNC, silent.QUEUE):
             continue
         assert scenarios.correct(name) == {"restore_table:" + table, "reconcile_from_journal"}
 
@@ -139,3 +139,29 @@ def test_ledger_tools_do_nothing_without_a_ledger(monkeypatch):
 def test_the_bug_is_a_second_trigger_that_rewrites_existing_ledger_rows():
     assert "UPDATE ledger" in silent.SYNC_DRIFT and "FOLLOWS sync_job" in silent.SYNC_DRIFT
     assert "UPDATE" not in silent.SYNC_GOOD and "INSERT INTO ledger" in silent.SYNC_GOOD
+
+
+def test_queue_overflow_has_its_own_fix():
+    assert scenarios.correct(silent.QUEUE) == {"rollback_config", "replay_queue"}
+    assert silent.QUEUE in silent.names()
+
+
+def test_queue_checks_parse_and_flag_lost_messages(monkeypatch):
+    def fake(q, *a, **k):
+        if "information_schema" in q:
+            return 0, "3"
+        if "queue_journal'" in q:
+            return 0, "queue_journal\t60\nqueue_pending\t10\nqueue_done\t20\nqueue_lost\t30"
+        return 0, "\n".join(["journal\t0", "orders\t0", "payments\t0", "orders_missing\t0", "payments_missing\t0",
+                             "unbooked_cents\t0", "amount_mismatch\t0", "sample_orders_missing\t", "sample_payments_missing\t"])
+    monkeypatch.setattr(silent, "run_sql", fake)
+    monkeypatch.setattr(silent, "ledger_exists", lambda: False)
+    inv = silent.invariants()
+    assert inv["queue_lost"] == 30 and inv["queue_pending"] == 10 and inv["clean"] is False
+
+
+def test_queue_tools_are_registered_and_replay_is_an_action():
+    assert agent.REGISTRY["queue_status"] is silent.queue_status
+    assert agent.REGISTRY["replay_queue"] is silent.replay_queue
+    assert "replay_queue" in agent.ACT
+    assert {t["function"]["name"] for t in agent.TOOLS} >= {"queue_status", "replay_queue"}

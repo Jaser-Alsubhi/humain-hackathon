@@ -7,13 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend import models  # noqa: F401
 from backend.db import Base, engine
 from backend.items import router as items_router
+from backend.messages import router as messages_router, start_worker
 from backend.orders import router as orders_router
 
 
 @asynccontextmanager
 async def lifespan(app):
     Base.metadata.create_all(engine)
+    stop = start_worker()
     yield
+    stop.set()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -25,6 +28,7 @@ app.add_middleware(
 )
 app.include_router(items_router)
 app.include_router(orders_router)
+app.include_router(messages_router)
 
 
 @app.get("/health")
