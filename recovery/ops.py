@@ -92,6 +92,26 @@ def service_status():
     return base + ("\n" + "\n".join(extra) if extra else "")
 
 
+def find_frozen_processes():
+    """List processes inside the containers that are stopped (T), blocked (D) or zombies (Z)."""
+    found = []
+    for svc in SERVICES:
+        try:
+            cid = compose("ps", "-q", svc)[1].strip()
+            if not cid:
+                continue
+            rows = sh(["docker", "top", cid, "-eo", "pid,stat,comm"])[1].strip().splitlines()[1:]
+        except Exception:
+            continue
+        for r in rows:
+            parts = r.split(None, 2)
+            if len(parts) == 3 and parts[1][:1] in ("T", "D", "Z"):
+                found.append("%s: pid %s (%s) is in state %s" % (svc, parts[0], parts[2], parts[1]))
+    if found:
+        return "stopped, blocked or zombie processes found (T = stopped, D = blocked on I/O, Z = zombie):\n" + "\n".join(found)
+    return "no stopped, blocked or zombie processes found"
+
+
 def get_logs(service, tail=25):
     return _bad_service(service) or compose("logs", "--no-color", "--tail", str(tail), service)[1][-3000:]
 

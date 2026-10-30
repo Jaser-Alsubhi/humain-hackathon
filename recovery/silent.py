@@ -3,6 +3,7 @@ The fault is a table switched to MySQL's BLACKHOLE engine, which accepts every w
 Designed knowing the fix, so these are dev scenarios, not an unbiased test.
 python -m recovery.silent --oracle   (no model, no tokens)"""
 import json
+import re
 import subprocess  # nosec B404
 import sys
 import urllib.request
@@ -14,6 +15,10 @@ TABLES = ("orders", "payments")
 TARGET = {"silent_drop_payments": "payments", "silent_drop_orders": "orders"}
 SEED, LOST = 20, 15
 PROBE = "__probe__"
+SYNC = "sync_corruption"
+TARGET[SYNC] = "payments"
+SYNC_TRIGGER = ("CREATE TRIGGER sync_job_bug BEFORE INSERT ON payments FOR EACH ROW "
+                "SET NEW.amount_cents = NEW.amount_cents + 1;")
 _TABLE_ERR = "unknown table, choose one of %s" % (TABLES,)
 
 
@@ -22,6 +27,8 @@ def names():
 
 
 def correct(name):
+    if name == SYNC:
+        return {"disable_sync_job", "repair_amounts_from_journal"}
     return {"restore_table:" + TARGET[name], "reconcile_from_journal"}
 
 
@@ -84,14 +91,16 @@ def probe_writes():
         extra_cols, extra_vals = (", status", ", 'paid'") if t == "orders" else ("", "")
         q = ("DELETE FROM %s WHERE order_ref = '%s';"
              "INSERT INTO %s (order_ref, amount_cents%s, created) VALUES ('%s', 1%s, NOW());"
-             "SELECT COUNT(*) FROM %s WHERE order_ref = '%s';"
+             "SELECT COALESCE(MAX(amount_cents), -1) FROM %s WHERE order_ref = '%s';"
              "DELETE FROM %s WHERE order_ref = '%s';") % (t, PROBE, t, extra_cols, PROBE, extra_vals, t, PROBE, t, PROBE)
         rc, out = run_sql(q)
         last = out.splitlines()[-1] if out else ""
         if last == "1":
             result[t] = "stored"
-        elif last == "0":
+        elif last in ("0", "-1"):
             result[t] = "LOST: the write was accepted but the row was not stored"
+        elif last.lstrip("-").isdigit():
+            result[t] = "CORRUPTED: wrote 1 cent but the table stored %s" % last
         else:
             result[t] = "error: " + out[-200:]
     return result
@@ -129,6 +138,42 @@ def reconcile_from_journal():
             "orders_still_missing": after["orders_missing"], "payments_still_missing": after["payments_missing"]}
 
 
+def list_sync_jobs():
+    """List database triggers: code that runs on every write and can change what is stored."""
+    rc, out = run_sql("SELECT trigger_name, event_object_table, action_timing, event_manipulation, action_statement "
+                      "FROM information_schema.triggers WHERE trigger_schema = 'hackdb';")
+    if rc != 0:
+        return out[-300:]
+    return out[-600:] or "no sync jobs or triggers found"
+
+
+def disable_sync_job():
+    """Drop every trigger in the application database."""
+    rc, out = run_sql("SELECT trigger_name FROM information_schema.triggers WHERE trigger_schema = 'hackdb';")
+    if rc != 0:
+        return out[-300:]
+    names = [n for n in out.split() if re.fullmatch(r"[A-Za-z0-9_]+", n)]
+    if not names:
+        return "no sync jobs found"
+    for n in names:
+        run_sql("DROP TRIGGER IF EXISTS %s;" % n)
+    return "disabled: " + ", ".join(names)
+
+
+def repair_amounts_from_journal():
+    """Overwrite amounts in orders and payments that differ from the intake journal."""
+    before = invariants()
+    rc, out = run_sql(
+        "UPDATE orders o JOIN order_journal j ON o.order_ref = j.order_ref "
+        "SET o.amount_cents = j.amount_cents WHERE o.amount_cents <> j.amount_cents;"
+        "UPDATE payments p JOIN order_journal j ON p.order_ref = j.order_ref "
+        "SET p.amount_cents = j.amount_cents WHERE p.amount_cents <> j.amount_cents;")
+    after = invariants()
+    if rc != 0 or out or "error" in before or "error" in after:
+        return out[-300:] or "repair failed"
+    return {"amount_mismatch_before": before["amount_mismatch"], "amount_mismatch_after": after["amount_mismatch"]}
+
+
 def healthy():
     """The truth for these scenarios: the site is ready AND no data is missing AND every table really stores writes."""
     inv = invariants()
@@ -137,7 +182,7 @@ def healthy():
 
 
 def clean():
-    run_sql("ALTER TABLE orders ENGINE=InnoDB;ALTER TABLE payments ENGINE=InnoDB;"
+    run_sql("DROP TRIGGER IF EXISTS sync_job_bug;ALTER TABLE orders ENGINE=InnoDB;ALTER TABLE payments ENGINE=InnoDB;"
             "TRUNCATE TABLE orders;TRUNCATE TABLE payments;TRUNCATE TABLE order_journal;")
 
 
@@ -155,7 +200,10 @@ def inject(name):
     clean()
     for i in range(SEED):
         assert post_order("SEED-%03d" % i, 1000 + 7 * i) == 201
-    run_sql("ALTER TABLE %s ENGINE=BLACKHOLE;" % t)
+    if name == SYNC:
+        run_sql(SYNC_TRIGGER)
+    else:
+        run_sql("ALTER TABLE %s ENGINE=BLACKHOLE;" % t)
     for i in range(LOST):
         assert post_order("LOST-%03d" % i, 2000 + 13 * i) == 201
 
@@ -178,7 +226,7 @@ def oracle():
         bad += flag != "OK"
         print("   %-5s %s" % (flag, label))
 
-    for name in names():
+    for name in [n for n in names() if n != SYNC]:
         t = TARGET[name]
         print(name)
         clean()
@@ -205,6 +253,27 @@ def oracle():
         restore_table(t)
         reconcile_from_journal()
         check("restore then replay fixes it", healthy())
+    print(SYNC)
+    clean()
+    inject(SYNC)
+    inv = invariants()
+    check("site still reports ready (the fault is silent)", ops.http("/ready")[0] == 200)
+    check("%d payment amounts differ from the journal" % LOST, inv.get("amount_mismatch") == LOST)
+    check("write probe sees corruption on payments", probe_writes()["payments"].startswith("CORRUPTED"))
+    for label, fn in (("naive restart", baseline.naive), ("runbook", baseline.runbook)):
+        clean()
+        inject(SYNC)
+        fn()
+        check("%s does not fix it" % label, healthy(), want=False)
+    clean()
+    inject(SYNC)
+    repair_amounts_from_journal()
+    check("repairing without stopping the cause does not hold", healthy(), want=False)
+    clean()
+    inject(SYNC)
+    disable_sync_job()
+    repair_amounts_from_journal()
+    check("stop the cause, then repair, fixes it", healthy())
     clean()
     scenarios.reset()
     print("ORACLE", "PASS" if not bad else "%d CHECK" % bad)

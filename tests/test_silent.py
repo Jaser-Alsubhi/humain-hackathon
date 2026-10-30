@@ -5,7 +5,18 @@ from recovery import agent, scenarios, silent
 
 def test_scenarios_know_the_silent_faults():
     for name, table in silent.TARGET.items():
+        if name == silent.SYNC:
+            continue
         assert scenarios.correct(name) == {"restore_table:" + table, "reconcile_from_journal"}
+
+
+def test_sync_corruption_has_its_own_fix():
+    assert scenarios.correct(silent.SYNC) == {"disable_sync_job", "repair_amounts_from_journal"}
+
+
+def test_probe_flags_corrupted_amounts(monkeypatch):
+    monkeypatch.setattr(silent, "run_sql", lambda *a, **k: (0, "2"))
+    assert all(v.startswith("CORRUPTED") for v in silent.probe_writes().values())
 
 
 def test_table_arguments_are_allowlisted(monkeypatch):

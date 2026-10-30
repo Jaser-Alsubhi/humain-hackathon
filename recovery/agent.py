@@ -49,6 +49,8 @@ TOOLS = [
     _tool("check_health", "Probe /health (process is up) and /ready (the service really works, database included). "
           "Set wait_seconds (max 15) to wait for recovery after a fix.", WAIT),
     _tool("service_status", "List every container and its state."),
+    _tool("find_frozen_processes", "Check every container for processes that are stopped (state T), blocked (D) or zombies (Z) "
+          "while the container still reports running. A stopped process cannot answer requests."),
     _tool("get_logs", "Read the most recent log lines of one service.", SERVICE, ["service"]),
     _tool("get_metrics", "Read CPU and memory use of the running containers."),
     _tool("db_status", "Show MySQL connection usage: max_connections, threads connected and what each connection is doing."),
@@ -69,6 +71,11 @@ TOOLS = [
           TABLE, ["table"]),
     _tool("reconcile_from_journal", "ACTION. Replay every journal entry that is missing from the orders or payments tables. "
           "Rows that already exist are left alone."),
+    _tool("list_sync_jobs", "List the database triggers (sync jobs): code that runs on every write and can change what is stored."),
+    _tool("disable_sync_job", "ACTION. Disable the sync job triggers in the database. Stops them changing future writes; "
+          "it does not repair rows they already changed."),
+    _tool("repair_amounts_from_journal", "ACTION. Overwrite amounts in orders and payments that differ from the intake journal. "
+          "If something is still changing new writes, stop that first or new rows will be wrong again."),
     _tool("escalate", "Hand the incident to a human. Use it when the root cause is outside what your tools can change, "
           "or when every safe action that addresses it has failed. Say what you found, what you tried and what a human should do. "
           "This ends your work on the incident.",
@@ -77,7 +84,7 @@ TOOLS = [
 ]
 
 ACT = {"restart_service", "start_service", "unpause_service", "rollback_config", "recreate_service",
-       "restore_table", "reconcile_from_journal"}
+       "restore_table", "reconcile_from_journal", "disable_sync_job", "repair_amounts_from_journal"}
 
 
 def _check_health(wait_seconds=0):
@@ -89,6 +96,7 @@ def _check_health(wait_seconds=0):
 REGISTRY = {
     "check_health": _check_health,
     "service_status": ops.service_status,
+    "find_frozen_processes": ops.find_frozen_processes,
     "get_logs": ops.get_logs,
     "get_metrics": ops.get_metrics,
     "db_status": ops.db_status,
@@ -103,6 +111,9 @@ REGISTRY = {
     "table_info": silent.table_info,
     "restore_table": silent.restore_table,
     "reconcile_from_journal": silent.reconcile_from_journal,
+    "list_sync_jobs": silent.list_sync_jobs,
+    "disable_sync_job": silent.disable_sync_job,
+    "repair_amounts_from_journal": silent.repair_amounts_from_journal,
     "escalate": escalation.escalate,
 }
 
