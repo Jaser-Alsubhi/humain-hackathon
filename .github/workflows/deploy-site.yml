@@ -1,0 +1,42 @@
+name: Deploy website
+
+on:
+  push:
+    branches: [site-build, main]
+    paths: ["site/**", ".github/workflows/deploy-site.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HOST: mend-ai.swedencentral.cloudapp.azure.com
+      USER: azureuser
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the page before deploying
+        run: |
+          test -s site/index.html
+          grep -q "<title>Mend</title>" site/index.html
+      - name: Copy the site to the Azure VM
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -t ed25519 "$HOST" >> ~/.ssh/known_hosts
+          scp -i ~/.ssh/deploy_key site/index.html "$USER@$HOST:~/site/index.html"
+      - name: Check the live site
+        run: |
+          sleep 3
+          curl -fsS "https://$HOST/" | grep -q "<title>Mend</title>"
+
+# Deploys site/index.html to the Azure VM when the site changes.

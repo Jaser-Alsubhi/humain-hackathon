@@ -1,0 +1,14 @@
+[Unit]
+Description=Mend live demo server
+After=docker.service network-online.target
+Wants=docker.service
+
+[Service]
+User=azureuser
+WorkingDirectory=/home/azureuser/humain-hack
+ExecStart=/home/azureuser/humain-hack/.venv/bin/python live/server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

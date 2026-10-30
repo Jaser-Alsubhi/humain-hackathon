@@ -1,0 +1,9 @@
+mend-ai.swedencentral.cloudapp.azure.com {
+	root * /srv
+	handle /api/live/* {
+		reverse_proxy host.docker.internal:8100
+	}
+	handle {
+		file_server
+	}
+}

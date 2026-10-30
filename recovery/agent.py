@@ -289,7 +289,8 @@ def _chat(client, model, msgs):
                 time.sleep(_retry_after(e, attempt))
 
 
-def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_seconds=240):
+def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_seconds=240, alert=None, data_mode=None):
+    """alert and data_mode are set by the live monitor (recovery.watch): its own alert text, and whether the failing signal was data."""
     from openai import OpenAI
 
     from recovery.model_check import load_env
@@ -327,8 +328,9 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
         return True
 
     msgs = [{"role": "system", "content": SYSTEM},
-            {"role": "user", "content": (ALERT_SYNC if scenario == silent.SYNC else ALERT_DATA)
-             if scenario in silent.TARGET else ALERT}]
+            {"role": "user", "content": alert or ((ALERT_SYNC if scenario == silent.SYNC else ALERT_DATA)
+                                                   if scenario in silent.TARGET else ALERT)}]
+    is_data = (scenario in silent.TARGET) if data_mode is None else bool(data_mode)
     started = time.time()
     tokens, final, sequence, acted, verified, t_recover = 0, "", [], False, False, None
     executed, llm_seconds = [], 0.0
@@ -393,9 +395,8 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
                 executed.append(sequence[-1])
             if name in ACT and not blocked:
                 acted, verified, waits_left = True, False, 2
-            data = scenario in silent.TARGET
-            if name == ("check_invariants" if data else "check_health") and acted:
-                verified = ('"clean": true' if data else '"ready": [200') in result
+            if name == ("check_invariants" if is_data else "check_health") and acted:
+                verified = ('"clean": true' if is_data else '"ready": [200') in result
                 if verified and t_recover is None:
                     t_recover = time.time() - started - STATS["wait_seconds"]
             log({"t": round(time.time() - started, 1), "scenario": scenario, "tool": name,
@@ -410,7 +411,7 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
                 break
         if handed_off:
             break
-    recovered = ops.wait_ready(30) and (silent.healthy() if scenario in silent.TARGET else True)
+    recovered = ops.wait_ready(30) and (silent.healthy() if is_data else True)
     log({"final": final[:500], "recovered": recovered})
     return {"scenario": scenario, "recovered": recovered, "steps": guard.steps, "actions": guard.action_count,
             "verified": verified, "seconds": time.time() - started, "tokens": tokens,
