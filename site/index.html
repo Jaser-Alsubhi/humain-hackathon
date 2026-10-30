@@ -97,7 +97,7 @@ footer{padding:6px 0 48px;color:var(--muted);font-size:14.5px;display:flex;gap:1
 .livenote{padding:0 16px 10px;color:var(--muted);font-size:14px}
 ol.steps li.info{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:14px;color:var(--muted)}
 .btn:disabled{opacity:.55;cursor:default}
-.hint{padding:0 16px 12px;color:var(--muted);font-size:14px}
+.hint{padding:10px 16px 12px;color:var(--muted);font-size:14px;border-bottom:1px solid var(--line)}
 .tabs{justify-content:center}
 footer.foot{display:block;margin-top:64px;padding:0;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
 .foot-bar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:22px 0 36px}
@@ -114,7 +114,7 @@ footer.foot{display:block;margin-top:64px;padding:0;border-top:1px solid var(--l
 <section class="hero">
   <div>
     <h1>Mend: it diagnoses, fixes and verifies failures on its own, even silent ones.</h1>
-    <p class="sub">It reads logs and health checks, finds the cause, takes only allowed actions and checks its own fix. It catches data problems that a healthy-looking site hides, and when no tool can fix the cause it stops and writes an incident ticket instead of guessing.</p>
+    <p class="sub">A monitor watches the site and calls the agent by itself, so a failure at 3 a.m. is fixed with nobody awake. The agent finds the cause, takes only allowed actions and checks its own fix. It catches data problems that a healthy-looking site hides, and writes an incident ticket when no tool can fix the cause.</p>
     <div class="cta"><button class="btn" id="cta-play">Watch a recovery</button><button class="btn ghost" data-open="results">See all results</button></div>
   </div>
   <div class="console" aria-live="polite">
@@ -160,6 +160,7 @@ footer.foot{display:block;margin-top:64px;padding:0;border-top:1px solid var(--l
 <div class="panel" id="p-how" hidden>
   <h2>How it works</h2>
   <div class="cols">
+    <div><h3>Watch</h3><p>A monitor checks readiness and the data every 5 seconds. After two failed checks in a row it starts the agent, with an alert built only from what it measured, so nobody has to tell it what broke.</p></div>
     <div><h3>Observe</h3><p>Service status, logs, health and readiness, metrics, database status and config changes. Tool output is wrapped as untrusted text, so a log line cannot give the agent orders.</p></div>
     <div><h3>Act under a guard</h3><p>Only allowlisted actions run. The agent has 12 steps and 4 actions, and the last two steps are reserved for acting and verifying.</p></div>
     <div><h3>Verify</h3><p>Recovered means the site is ready and the data is clean. For silent data problems a healthy page is not enough, so the agent compares the intake journal with the orders and payments tables.</p></div>
@@ -333,7 +334,7 @@ reset();
     document.getElementById("alert").textContent="Pick a fault and press Break it. The monitor is not told what you chose.";
     ol.innerHTML='<li class="on empty" style="font-family:inherit;opacity:1">This is the real stack running on the server, not a recording.</li>';
     document.getElementById("ticketbox").innerHTML="";
-    document.getElementById("meta").textContent="This is the real stack running on the server. Each run is limited so everyone gets a turn.";
+    document.getElementById("meta").textContent="Each run is limited so everyone gets a turn.";
     lbtn.disabled=false;
     poll(true);
   }

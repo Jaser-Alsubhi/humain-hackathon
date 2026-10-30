@@ -14,7 +14,7 @@ CSS = """/*LIVE-CSS*/
 .livenote{padding:0 16px 10px;color:var(--muted);font-size:14px}
 ol.steps li.info{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:14px;color:var(--muted)}
 .btn:disabled{opacity:.55;cursor:default}
-.hint{padding:0 16px 12px;color:var(--muted);font-size:14px}
+.hint{padding:10px 16px 12px;color:var(--muted);font-size:14px;border-bottom:1px solid var(--line)}
 .tabs{justify-content:center}
 footer.foot{display:block;margin-top:64px;padding:0;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
 .foot-bar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:22px 0 36px}
@@ -47,7 +47,7 @@ JS = r"""/*LIVE-JS*/
     document.getElementById("alert").textContent="Pick a fault and press Break it. The monitor is not told what you chose.";
     ol.innerHTML='<li class="on empty" style="font-family:inherit;opacity:1">This is the real stack running on the server, not a recording.</li>';
     document.getElementById("ticketbox").innerHTML="";
-    document.getElementById("meta").textContent="This is the real stack running on the server. Each run is limited so everyone gets a turn.";
+    document.getElementById("meta").textContent="Each run is limited so everyone gets a turn.";
     lbtn.disabled=false;
     poll(true);
   }
