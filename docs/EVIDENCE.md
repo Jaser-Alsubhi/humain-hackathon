@@ -129,10 +129,12 @@ On `hung_backend` every run took one action, the restart of the backend, with ne
 | Sync job corrupts data | 78 s | 9 | 2 | 21,647 |
 | Payments silently lost | 137 s | 10 | 2 | 23,305 |
 
+**Unfixable fault through the monitor (laptop, one run, not clean).** The monitor detected the rotated database password in about 16 seconds. Attempt 1 investigated, then ran `recreate_service` and `restart_service` on the backend, neither of which could help, and ended without a ticket (198 s, 51,240 tokens). Attempt 2 took 0 actions and escalated correctly (105 s, 26,344 tokens): ticket `ESC-20261031T005401-672` names the MySQL auth error 1045 and recommends creating a database user and updating the backend credentials. The monitor then stayed paused and did not call the agent again. In the earlier lab runs of this fault the agent took 0 actions in 2 of 2 runs, so this single monitored run is worse than those. Two harmless but pointless restarts happened before the ticket. The code was not changed after this run.
+
 **Limits.**
 - One live run per fault, so this shows the chain works end to end, not a rate.
 - The queue fault was added to the live list after these runs.
-- The monitor has not been run on the frozen backend or the unfixable fault from the laptop, and the live list leaves out the unfixable fault.
+- The monitor has not been run on the frozen backend from the laptop, and the live list leaves out the unfixable fault. The one monitored unfixable run needed both attempts to reach a ticket (see above).
 - Detection of silent faults depends on the journal and the data checks, which only cover orders, payments, the ledger and the queue. A silent fault elsewhere would not be seen.
-- The live button is limited to 5 runs per visitor per hour and 25 per day, one at a time, with a kill switch. The live agent uses a shared provider key and a small shared VM.
+- The live button is limited to 3 runs per visitor per hour and 25 per day, one at a time, with a kill switch. The live agent uses a shared provider key and a small shared VM.
 
