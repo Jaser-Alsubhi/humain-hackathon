@@ -221,10 +221,10 @@ function frac(list,m){var r=rowsFor(list,m);return {ok:r.filter(function(x){retu
   var ha=frac1(hng),hn=frac(hng,"naive");
   function cls(f){return f.ok===f.n?"ok":(f.ok===0?"":"mid")}
   var t=[
-   ["Outages",oa,"Runbook <b>"+ob.ok+"/"+ob.n+"</b> &middot; Restart <b>"+on.ok+"/"+on.n+"</b>"],
-   ["Silent data problems",da,"Runbook <b>"+db.ok+"/"+db.n+"</b> &middot; Restart <b>"+dn.ok+"/"+dn.n+"</b>"],
-   ["Unfixable fault",ua,"Restart acted wrongly in <b>"+un.wrong+"/"+un.n+"</b>"],
-   ["Hangs",ha,"Restart <b>"+hn.ok+"/"+hn.n+"</b>"]
+   ["Outages",oa,"fixed. The site is down or broken. A fixed runbook fixed <b>"+ob.ok+"/"+ob.n+"</b>, a plain restart <b>"+on.ok+"/"+on.n+"</b>."],
+   ["Silent data problems",da,"fixed. The site looks fine but data is wrong. A runbook fixed <b>"+db.ok+"/"+db.n+"</b>, a restart <b>"+dn.ok+"/"+dn.n+"</b>."],
+   ["Unfixable fault",ua,"escalated. No tool can fix it, so it wrote a ticket. A restart did the wrong thing in <b>"+un.wrong+"/"+un.n+"</b>."],
+   ["Hangs",ha,"fixed. A process is frozen but still shows as running. A restart fixed <b>"+hn.ok+"/"+hn.n+"</b>."]
   ];
   document.getElementById("tiles").innerHTML=t.map(function(x){
     return '<div class="tile"><h3>'+x[0]+'</h3><div class="big '+cls(x[1])+'">'+x[1].ok+'/'+x[1].n+'</div><p>'+x[2]+'</p></div>';
