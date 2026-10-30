@@ -59,3 +59,19 @@ One earlier `hung_exhaust` attempt ended in a rate-limit error and is counted as
 **Two changes made after seeing these failures.** Both are general, not scenario-specific, and were made before the held-out run: (1) when investigation is closed, the guard names the tools still allowed (commit 91d579c); (2) `service_status` shows each container's process state (commit f918377). I did not add a hang-specific hint to the prompt, because that would tune the agent to this scenario.
 
 **Limits.** Each configuration was run once or three times, so these are anecdotes, not rates. The agent recovered 1 of 3 `hung_backend` runs, and that run carried two wrong actions. The model's tendency to ignore a correct process-state signal is unresolved. Latency of 80 to 213 seconds is mostly API throttling between steps.
+
+## #3 Sync corruption: a quiet bug that changes amounts
+
+**Scenario.** `sync_corruption` installs a database trigger (`sync_job_bug`) that adds 1 cent to every payment written after it starts. The site stays ready and every health check passes. The intake journal still holds the true amounts, so the invariant checker sees `amount_mismatch` rise (15 of 35 payments). The write probe also catches it: it writes 1 cent and reads back a different amount.
+
+**Correct fix, two steps in order.** Stop the sync job (`disable_sync_job`), then overwrite the wrong amounts from the journal (`repair_amounts_from_journal`). Repairing without stopping the job does not hold, because new writes are corrupted again.
+
+**Zero-token oracle: PASS.** Site stays ready; 15 amounts differ; the write probe sees the corruption; the naive restart and the runbook do not fix it; repairing without stopping the cause does not hold; stopping the cause then repairing fixes it.
+
+| Method | Recovered | Notes |
+|---|---|---|
+| Naive restart | 0/3 | 1 wrong action in each run |
+| Fixed runbook | 0/3 | takes no action |
+| Mend agent (gpt-oss-120b) | 3/3 | 2 actions each, 0 wrong; 17,207, 19,776 and 17,199 tokens |
+
+**Limits.** This is a development scenario designed knowing the fix, and the corruption is simulated with a trigger, not a real sync job copying data into a ledger. Three runs at temperature 0 show stability, not breadth. The description of `repair_amounts_from_journal` says to stop whatever is still changing new writes first, which is a hint toward the right order, so this result is easier than a case with no such hint. I did not run the agent without that sentence.
