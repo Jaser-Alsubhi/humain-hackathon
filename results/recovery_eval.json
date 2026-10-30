@@ -2596,7 +2596,7 @@
   {
     "recovered": false,
     "actions": 1,
-    "seconds": 3.0505530834198,
+    "seconds": 3.601262092590332,
     "sequence": [
       "restart_service:backend"
     ],
@@ -2609,7 +2609,7 @@
   {
     "recovered": false,
     "actions": 1,
-    "seconds": 2.9986414909362793,
+    "seconds": 3.423051595687866,
     "sequence": [
       "restart_service:backend"
     ],
@@ -2622,7 +2622,7 @@
   {
     "recovered": false,
     "actions": 1,
-    "seconds": 2.976271629333496,
+    "seconds": 3.4258360862731934,
     "sequence": [
       "restart_service:backend"
     ],
@@ -2635,7 +2635,7 @@
   {
     "recovered": false,
     "actions": 0,
-    "seconds": 0.7373313903808594,
+    "seconds": 1.259204626083374,
     "sequence": [],
     "wrong_actions": 0,
     "scenario": "sync_corruption",
@@ -2646,7 +2646,7 @@
   {
     "recovered": false,
     "actions": 0,
-    "seconds": 0.7352614402770996,
+    "seconds": 1.3431599140167236,
     "sequence": [],
     "wrong_actions": 0,
     "scenario": "sync_corruption",
@@ -2657,7 +2657,7 @@
   {
     "recovered": false,
     "actions": 0,
-    "seconds": 0.6758244037628174,
+    "seconds": 1.3690571784973145,
     "sequence": [],
     "wrong_actions": 0,
     "scenario": "sync_corruption",
@@ -2668,51 +2668,7 @@
   {
     "recovered": true,
     "actions": 2,
-    "tokens": 17207,
-    "steps": 8,
-    "verified": true,
-    "bad_json": 0,
-    "sequence": [
-      "service_status",
-      "check_health",
-      "check_invariants",
-      "list_sync_jobs",
-      "disable_sync_job",
-      "repair_amounts_from_journal",
-      "check_invariants",
-      "check_health"
-    ],
-    "calls": [
-      "service_status",
-      "check_health",
-      "check_invariants",
-      "list_sync_jobs",
-      "disable_sync_job",
-      "repair_amounts_from_journal",
-      "check_invariants",
-      "check_health"
-    ],
-    "llm_seconds": 64,
-    "rate_retries": 1,
-    "nudges": 0,
-    "wait_seconds": 57,
-    "models": {
-      "gpt-oss-120b": 17207
-    },
-    "escalated_at": null,
-    "seconds": 8.344223022460938,
-    "handed_off": false,
-    "ticket": null,
-    "wrong_actions": 0,
-    "scenario": "sync_corruption",
-    "method": "agent",
-    "model": "gpt-oss-120b",
-    "run": 0
-  },
-  {
-    "recovered": true,
-    "actions": 2,
-    "tokens": 19776,
+    "tokens": 20578,
     "steps": 9,
     "verified": true,
     "bad_json": 0,
@@ -2721,32 +2677,78 @@
       "check_health",
       "check_invariants",
       "list_sync_jobs",
-      "probe_writes",
-      "disable_sync_job",
-      "repair_amounts_from_journal",
-      "check_health",
-      "check_invariants"
+      "restore_sync_job",
+      "check_invariants",
+      "resync_ledger",
+      "check_invariants",
+      "check_health"
     ],
     "calls": [
       "service_status",
       "check_health",
       "check_invariants",
       "list_sync_jobs",
-      "probe_writes",
-      "disable_sync_job",
-      "repair_amounts_from_journal",
-      "check_health",
-      "check_invariants"
+      "restore_sync_job",
+      "check_invariants",
+      "resync_ledger",
+      "check_invariants",
+      "check_health"
     ],
-    "llm_seconds": 122,
-    "rate_retries": 2,
+    "llm_seconds": 62,
+    "rate_retries": 1,
     "nudges": 0,
-    "wait_seconds": 114,
+    "wait_seconds": 56,
     "models": {
-      "gpt-oss-120b": 19776
+      "gpt-oss-120b": 20578
     },
     "escalated_at": null,
-    "seconds": 9.566041707992554,
+    "seconds": 11.176931858062744,
+    "handed_off": false,
+    "ticket": null,
+    "wrong_actions": 0,
+    "scenario": "sync_corruption",
+    "method": "agent",
+    "model": "gpt-oss-120b",
+    "run": 0
+  },
+  {
+    "recovered": true,
+    "actions": 2,
+    "tokens": 20516,
+    "steps": 9,
+    "verified": true,
+    "bad_json": 0,
+    "sequence": [
+      "service_status",
+      "check_health",
+      "check_invariants",
+      "list_sync_jobs",
+      "restore_sync_job",
+      "check_invariants",
+      "resync_ledger",
+      "check_invariants",
+      "check_health"
+    ],
+    "calls": [
+      "service_status",
+      "check_health",
+      "check_invariants",
+      "list_sync_jobs",
+      "restore_sync_job",
+      "check_invariants",
+      "resync_ledger",
+      "check_invariants",
+      "check_health"
+    ],
+    "llm_seconds": 119,
+    "rate_retries": 2,
+    "nudges": 0,
+    "wait_seconds": 113,
+    "models": {
+      "gpt-oss-120b": 20516
+    },
+    "escalated_at": null,
+    "seconds": 11.798808574676514,
     "handed_off": false,
     "ticket": null,
     "wrong_actions": 0,
@@ -2758,8 +2760,8 @@
   {
     "recovered": true,
     "actions": 2,
-    "tokens": 17199,
-    "steps": 8,
+    "tokens": 20375,
+    "steps": 9,
     "verified": true,
     "bad_json": 0,
     "sequence": [
@@ -2767,8 +2769,9 @@
       "check_health",
       "check_invariants",
       "list_sync_jobs",
-      "disable_sync_job",
-      "repair_amounts_from_journal",
+      "restore_sync_job",
+      "check_invariants",
+      "resync_ledger",
       "check_invariants",
       "check_health"
     ],
@@ -2777,20 +2780,21 @@
       "check_health",
       "check_invariants",
       "list_sync_jobs",
-      "disable_sync_job",
-      "repair_amounts_from_journal",
+      "restore_sync_job",
+      "check_invariants",
+      "resync_ledger",
       "check_invariants",
       "check_health"
     ],
-    "llm_seconds": 63,
-    "rate_retries": 1,
+    "llm_seconds": 116,
+    "rate_retries": 2,
     "nudges": 0,
-    "wait_seconds": 57,
+    "wait_seconds": 110,
     "models": {
-      "gpt-oss-120b": 17199
+      "gpt-oss-120b": 20375
     },
     "escalated_at": null,
-    "seconds": 7.701183557510376,
+    "seconds": 11.097424507141113,
     "handed_off": false,
     "ticket": null,
     "wrong_actions": 0,

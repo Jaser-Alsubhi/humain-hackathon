@@ -60,18 +60,20 @@ One earlier `hung_exhaust` attempt ended in a rate-limit error and is counted as
 
 **Limits.** Each configuration was run once or three times, so these are anecdotes, not rates. The agent recovered 1 of 3 `hung_backend` runs, and that run carried two wrong actions. The model's tendency to ignore a correct process-state signal is unresolved. Latency of 80 to 213 seconds is mostly API throttling between steps.
 
-## #3 Sync corruption: a quiet bug that changes amounts
+## #3 Sync corruption: a sync job that drifts a ledger away from the orders
 
-**Scenario.** `sync_corruption` installs a database trigger (`sync_job_bug`) that adds 1 cent to every payment written after it starts. The site stays ready and every health check passes. The intake journal still holds the true amounts, so the invariant checker sees `amount_mismatch` rise (15 of 35 payments). The write probe also catches it: it writes 1 cent and reads back a different amount.
+**Scenario.** `sync_corruption` adds a `ledger` table and a sync job (a database trigger on `orders`) that copies every new order into it. The first 20 orders sync correctly. Then the job is replaced by a buggy version that adds one cent for every five order ids, so each later copy drifts further from the truth (15 of 35 ledger rows end up wrong). Orders, payments and the intake journal stay correct, the site stays ready, and every health check passes.
 
-**Correct fix, two steps in order.** Stop the sync job (`disable_sync_job`), then overwrite the wrong amounts from the journal (`repair_amounts_from_journal`). Repairing without stopping the job does not hold, because new writes are corrupted again.
+**How it is detected.** `check_invariants` compares every third order with its ledger row (a sample), then all orders (the full check). `probe_writes` places a 1 cent test order and reads back what the ledger stored.
 
-**Zero-token oracle: PASS.** Site stays ready; 15 amounts differ; the write probe sees the corruption; the naive restart and the runbook do not fix it; repairing without stopping the cause does not hold; stopping the cause then repairing fixes it.
+**Correct fix.** Reinstall the standard sync job (`restore_sync_job`) and make every ledger row match its order (`resync_ledger`). Doing only one of them is not enough: resyncing alone leaves the job drifting new rows, and restoring alone leaves the old wrong rows.
+
+**Zero-token oracle: PASS.** Site stays ready; 15 ledger rows differ; the sampled check and the write probe catch it; the naive restart and the runbook do not fix it; resync alone does not hold; restore alone leaves the old drift; restore then resync fixes it.
 
 | Method | Recovered | Notes |
 |---|---|---|
 | Naive restart | 0/3 | 1 wrong action in each run |
 | Fixed runbook | 0/3 | takes no action |
-| Mend agent (gpt-oss-120b) | 3/3 | 2 actions each, 0 wrong; 17,207, 19,776 and 17,199 tokens |
+| Mend agent (gpt-oss-120b) | 3/3 | 2 actions each, 0 wrong; 20,578, 20,516 and 20,375 tokens |
 
-**Limits.** This is a development scenario designed knowing the fix, and the corruption is simulated with a trigger, not a real sync job copying data into a ledger. Three runs at temperature 0 show stability, not breadth. The description of `repair_amounts_from_journal` says to stop whatever is still changing new writes first, which is a hint toward the right order, so this result is easier than a case with no such hint. I did not run the agent without that sentence.
+**Limits.** This is a development scenario designed knowing the fix, not an unbiased test. The ledger lives in the same database, so it is a simulated replica, not a separate system. The drift starts at a set point and grows with order id, so it is gradual in size but not in onset. The alert for this scenario names the ledger, which narrows the search. Either repair order ends clean, so the check is on the final state. Three runs at temperature 0 show stability, not breadth. An earlier version of this scenario (a trigger adding 1 cent to payments) also passed 3 of 3; it was replaced so that the scenario matches the brief, and its numbers are not used here.

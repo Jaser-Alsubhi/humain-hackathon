@@ -31,6 +31,8 @@ SYSTEM = (
 
 
 ALERT = "ALERT: users report that the site is failing. Investigate and fix it."
+ALERT_SYNC = ("ALERT: the site looks healthy, but finance reports that the ledger totals no longer match the orders. "
+              "Investigate and fix it.")
 ALERT_DATA = ("ALERT: the site looks healthy, but finance reports that revenue is lower than the number of orders suggests. "
               "Investigate and fix it.")
 
@@ -63,7 +65,8 @@ TOOLS = [
           "Undoes changes made to the running container (a lost network, a changed resource limit). Data volumes are kept. "
           "Try restart_service first when the container itself looks intact.", SERVICE, ["service"]),
     _tool("check_invariants", "Compare the intake journal with the orders and payments tables. Shows what is missing or wrong "
-          "and whether the data is clean. The site can be ready while this is not clean."),
+          "and whether the data is clean. When a ledger table exists it also compares the ledger with the orders, on a sample and in full. "
+          "The site can be ready while this is not clean."),
     _tool("probe_writes", "Write one marked row into each of the orders and payments tables and read it back. "
           "Shows whether each table really stores what it accepts."),
     _tool("table_info", "Show the storage engine and row count of one table.", TABLE, ["table"]),
@@ -72,10 +75,9 @@ TOOLS = [
     _tool("reconcile_from_journal", "ACTION. Replay every journal entry that is missing from the orders or payments tables. "
           "Rows that already exist are left alone."),
     _tool("list_sync_jobs", "List the database triggers (sync jobs): code that runs on every write and can change what is stored."),
-    _tool("disable_sync_job", "ACTION. Disable the sync job triggers in the database. Stops them changing future writes; "
-          "it does not repair rows they already changed."),
-    _tool("repair_amounts_from_journal", "ACTION. Overwrite amounts in orders and payments that differ from the intake journal. "
-          "If something is still changing new writes, stop that first or new rows will be wrong again."),
+    _tool("restore_sync_job", "ACTION. Replace the installed sync job with the standard one, which copies each new order into the "
+          "ledger unchanged. It does not repair ledger rows that are already wrong."),
+    _tool("resync_ledger", "ACTION. Make every ledger row match its order: correct wrong amounts and add missing rows."),
     _tool("escalate", "Hand the incident to a human. Use it when the root cause is outside what your tools can change, "
           "or when every safe action that addresses it has failed. Say what you found, what you tried and what a human should do. "
           "This ends your work on the incident.",
@@ -84,7 +86,7 @@ TOOLS = [
 ]
 
 ACT = {"restart_service", "start_service", "unpause_service", "rollback_config", "recreate_service",
-       "restore_table", "reconcile_from_journal", "disable_sync_job", "repair_amounts_from_journal"}
+       "restore_table", "reconcile_from_journal", "restore_sync_job", "resync_ledger"}
 
 
 def _check_health(wait_seconds=0):
@@ -112,8 +114,8 @@ REGISTRY = {
     "restore_table": silent.restore_table,
     "reconcile_from_journal": silent.reconcile_from_journal,
     "list_sync_jobs": silent.list_sync_jobs,
-    "disable_sync_job": silent.disable_sync_job,
-    "repair_amounts_from_journal": silent.repair_amounts_from_journal,
+    "restore_sync_job": silent.restore_sync_job,
+    "resync_ledger": silent.resync_ledger,
     "escalate": escalation.escalate,
 }
 
@@ -323,7 +325,8 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
         return True
 
     msgs = [{"role": "system", "content": SYSTEM},
-            {"role": "user", "content": ALERT_DATA if scenario in silent.TARGET else ALERT}]
+            {"role": "user", "content": (ALERT_SYNC if scenario == silent.SYNC else ALERT_DATA)
+             if scenario in silent.TARGET else ALERT}]
     started = time.time()
     tokens, final, sequence, acted, verified, t_recover = 0, "", [], False, False, None
     executed, llm_seconds = [], 0.0

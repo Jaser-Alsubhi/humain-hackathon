@@ -1,5 +1,7 @@
 """Silent-failure scenarios: the site is up and /ready is green, but orders or payments are no longer stored.
 The fault is a table switched to MySQL's BLACKHOLE engine, which accepts every write and keeps nothing.
+sync_corruption is different: a sync job (a trigger) copies every new order into a ledger, and a bug makes the copies
+drift further from the truth with every order. The site stays ready.
 Designed knowing the fix, so these are dev scenarios, not an unbiased test.
 python -m recovery.silent --oracle   (no model, no tokens)"""
 import json
@@ -16,9 +18,17 @@ TARGET = {"silent_drop_payments": "payments", "silent_drop_orders": "orders"}
 SEED, LOST = 20, 15
 PROBE = "__probe__"
 SYNC = "sync_corruption"
-TARGET[SYNC] = "payments"
-SYNC_TRIGGER = ("CREATE TRIGGER sync_job_bug BEFORE INSERT ON payments FOR EACH ROW "
-                "SET NEW.amount_cents = NEW.amount_cents + 1;")
+TARGET[SYNC] = "ledger"
+LEDGER_TABLE = ("CREATE TABLE ledger (id INT AUTO_INCREMENT PRIMARY KEY, order_ref VARCHAR(64) NOT NULL, "
+                "amount_cents INT NOT NULL, created DATETIME NULL, KEY ix_ledger_ref (order_ref));")
+_SYNC_HEAD = "CREATE TRIGGER sync_job AFTER INSERT ON orders FOR EACH ROW INSERT INTO ledger (order_ref, amount_cents, created) "
+SYNC_GOOD = _SYNC_HEAD + "VALUES (NEW.order_ref, NEW.amount_cents, NEW.created);"
+# The bug: the copied amount drifts upward by one cent for every five orders placed so far.
+SYNC_BUGGY = _SYNC_HEAD + "VALUES (NEW.order_ref, NEW.amount_cents + FLOOR(NEW.id / 5), NEW.created);"
+LEDGER_PROBE = ("DELETE FROM orders WHERE order_ref = '%(p)s';DELETE FROM ledger WHERE order_ref = '%(p)s';"
+                "INSERT INTO orders (order_ref, amount_cents, status, created) VALUES ('%(p)s', 1, 'paid', NOW());"
+                "SELECT COALESCE(MAX(amount_cents), -1) FROM ledger WHERE order_ref = '%(p)s';"
+                "DELETE FROM orders WHERE order_ref = '%(p)s';DELETE FROM ledger WHERE order_ref = '%(p)s';") % {"p": PROBE}
 _TABLE_ERR = "unknown table, choose one of %s" % (TABLES,)
 
 
@@ -28,7 +38,7 @@ def names():
 
 def correct(name):
     if name == SYNC:
-        return {"disable_sync_job", "repair_amounts_from_journal"}
+        return {"restore_sync_job", "resync_ledger"}
     return {"restore_table:" + TARGET[name], "reconcile_from_journal"}
 
 
@@ -58,6 +68,31 @@ def _missing(t):
     return "FROM order_journal j LEFT JOIN %s t ON t.order_ref = j.order_ref WHERE t.order_ref IS NULL" % t
 
 
+def ledger_exists():
+    rc, out = run_sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'hackdb' AND table_name = 'ledger';")
+    return rc == 0 and out.strip() == "1"
+
+
+def ledger_checks():
+    """Compare orders with their ledger copies: a sample (every third order) and the full set."""
+    both = "FROM orders o JOIN ledger l ON l.order_ref = o.order_ref"
+    sample = ("FROM order_journal j JOIN orders o ON o.order_ref = j.order_ref "
+              "LEFT JOIN ledger l ON l.order_ref = o.order_ref WHERE MOD(j.id, 3) = 0")
+    q = (
+        "SELECT 'ledger_rows', COUNT(*) FROM ledger;"
+        "SELECT 'ledger_missing', COUNT(*) FROM orders o LEFT JOIN ledger l ON l.order_ref = o.order_ref WHERE l.order_ref IS NULL;"
+        "SELECT 'ledger_mismatch', COUNT(*) " + both + " WHERE l.amount_cents <> o.amount_cents;"
+        "SELECT 'ledger_drift_cents', COALESCE(SUM(l.amount_cents - o.amount_cents), 0) " + both + ";"
+        "SELECT 'ledger_sample_checked', COUNT(*) " + sample + ";"
+        "SELECT 'ledger_sample_wrong', COUNT(*) " + sample + " AND (l.order_ref IS NULL OR l.amount_cents <> o.amount_cents);"
+    )
+    rc, out = run_sql(q)
+    got = _rows(out)
+    if rc != 0 or got is None:
+        return {"error": out[-300:] or "ledger query failed"}
+    return {k: (int(v) if v.lstrip("-").isdigit() else v) for k, v in got.items()}
+
+
 def invariants():
     """Compare the intake journal with the orders and payments tables. clean is True only when nothing is missing or wrong."""
     q = (
@@ -81,6 +116,12 @@ def invariants():
         return {"error": out[-300:] or "query failed", "clean": False}
     r = {k: (int(v) if v.lstrip("-").isdigit() else v) for k, v in got.items()}
     r["clean"] = not (r["orders_missing"] or r["payments_missing"] or r["amount_mismatch"])
+    if ledger_exists():
+        led = ledger_checks()
+        if "error" in led:
+            return {"error": led["error"], "clean": False}
+        r.update(led)
+        r["clean"] = r["clean"] and not (led["ledger_missing"] or led["ledger_mismatch"])
     return r
 
 
@@ -103,6 +144,17 @@ def probe_writes():
             result[t] = "CORRUPTED: wrote 1 cent but the table stored %s" % last
         else:
             result[t] = "error: " + out[-200:]
+    if ledger_exists():
+        rc, out = run_sql(LEDGER_PROBE)
+        last = out.splitlines()[-1] if out else ""
+        if last == "1":
+            result["ledger"] = "stored"
+        elif last == "-1":
+            result["ledger"] = "LOST: the order was stored but the sync job did not copy it into the ledger"
+        elif last.lstrip("-").isdigit():
+            result["ledger"] = "CORRUPTED: wrote 1 cent but the ledger stored %s" % last
+        else:
+            result["ledger"] = "error: " + out[-200:]
     return result
 
 
@@ -147,31 +199,29 @@ def list_sync_jobs():
     return out[-600:] or "no sync jobs or triggers found"
 
 
-def disable_sync_job():
-    """Drop every trigger in the application database."""
-    rc, out = run_sql("SELECT trigger_name FROM information_schema.triggers WHERE trigger_schema = 'hackdb';")
-    if rc != 0:
-        return out[-300:]
-    names = [n for n in out.split() if re.fullmatch(r"[A-Za-z0-9_]+", n)]
-    if not names:
-        return "no sync jobs found"
-    for n in names:
-        run_sql("DROP TRIGGER IF EXISTS %s;" % n)
-    return "disabled: " + ", ".join(names)
+def restore_sync_job():
+    """Replace whatever sync job is installed with the standard one: it copies each new order into the ledger unchanged."""
+    if not ledger_exists():
+        return "there is no ledger table, nothing to restore"
+    rc, out = run_sql("DROP TRIGGER IF EXISTS sync_job;DROP TRIGGER IF EXISTS sync_job_bug;" + SYNC_GOOD)
+    return "sync job restored" if rc == 0 and not out else out[-300:]
 
 
-def repair_amounts_from_journal():
-    """Overwrite amounts in orders and payments that differ from the intake journal."""
-    before = invariants()
+def resync_ledger():
+    """Make every ledger row match its order: fix wrong amounts and add missing rows."""
+    if not ledger_exists():
+        return "there is no ledger table, nothing to resync"
+    before = ledger_checks()
     rc, out = run_sql(
-        "UPDATE orders o JOIN order_journal j ON o.order_ref = j.order_ref "
-        "SET o.amount_cents = j.amount_cents WHERE o.amount_cents <> j.amount_cents;"
-        "UPDATE payments p JOIN order_journal j ON p.order_ref = j.order_ref "
-        "SET p.amount_cents = j.amount_cents WHERE p.amount_cents <> j.amount_cents;")
-    after = invariants()
+        "UPDATE ledger l JOIN orders o ON o.order_ref = l.order_ref SET l.amount_cents = o.amount_cents "
+        "WHERE l.amount_cents <> o.amount_cents;"
+        "INSERT INTO ledger (order_ref, amount_cents, created) SELECT o.order_ref, o.amount_cents, o.created "
+        "FROM orders o LEFT JOIN ledger l ON l.order_ref = o.order_ref WHERE l.order_ref IS NULL;")
+    after = ledger_checks()
     if rc != 0 or out or "error" in before or "error" in after:
-        return out[-300:] or "repair failed"
-    return {"amount_mismatch_before": before["amount_mismatch"], "amount_mismatch_after": after["amount_mismatch"]}
+        return out[-300:] or "resync failed"
+    return {"ledger_mismatch_before": before["ledger_mismatch"], "ledger_mismatch_after": after["ledger_mismatch"],
+            "ledger_missing_after": after["ledger_missing"]}
 
 
 def healthy():
@@ -182,7 +232,7 @@ def healthy():
 
 
 def clean():
-    run_sql("DROP TRIGGER IF EXISTS sync_job_bug;ALTER TABLE orders ENGINE=InnoDB;ALTER TABLE payments ENGINE=InnoDB;"
+    run_sql("DROP TRIGGER IF EXISTS sync_job_bug;DROP TRIGGER IF EXISTS sync_job;DROP TABLE IF EXISTS ledger;ALTER TABLE orders ENGINE=InnoDB;ALTER TABLE payments ENGINE=InnoDB;"
             "TRUNCATE TABLE orders;TRUNCATE TABLE payments;TRUNCATE TABLE order_journal;")
 
 
@@ -198,10 +248,12 @@ def inject(name):
     ops.OPS.mkdir(exist_ok=True)
     FLAG.write_text("1", encoding="utf-8")
     clean()
+    if name == SYNC:
+        run_sql(LEDGER_TABLE + SYNC_GOOD)
     for i in range(SEED):
         assert post_order("SEED-%03d" % i, 1000 + 7 * i) == 201
     if name == SYNC:
-        run_sql(SYNC_TRIGGER)
+        run_sql("DROP TRIGGER IF EXISTS sync_job;" + SYNC_BUGGY)
     else:
         run_sql("ALTER TABLE %s ENGINE=BLACKHOLE;" % t)
     for i in range(LOST):
@@ -258,8 +310,11 @@ def oracle():
     inject(SYNC)
     inv = invariants()
     check("site still reports ready (the fault is silent)", ops.http("/ready")[0] == 200)
-    check("%d payment amounts differ from the journal" % LOST, inv.get("amount_mismatch") == LOST)
-    check("write probe sees corruption on payments", probe_writes()["payments"].startswith("CORRUPTED"))
+    check("orders, payments and journal agree: the damage is only in the ledger",
+          inv.get("amount_mismatch") == 0 and inv.get("orders_missing") == 0 and inv.get("payments_missing") == 0)
+    check("%d ledger rows differ from their orders" % LOST, inv.get("ledger_mismatch") == LOST)
+    check("the sampled check catches it", inv.get("ledger_sample_wrong", 0) > 0 and inv.get("clean") is False)
+    check("write probe sees the drift on the ledger", probe_writes().get("ledger", "").startswith("CORRUPTED"))
     for label, fn in (("naive restart", baseline.naive), ("runbook", baseline.runbook)):
         clean()
         inject(SYNC)
@@ -267,13 +322,17 @@ def oracle():
         check("%s does not fix it" % label, healthy(), want=False)
     clean()
     inject(SYNC)
-    repair_amounts_from_journal()
-    check("repairing without stopping the cause does not hold", healthy(), want=False)
+    resync_ledger()
+    check("resyncing without fixing the job does not hold", healthy(), want=False)
     clean()
     inject(SYNC)
-    disable_sync_job()
-    repair_amounts_from_journal()
-    check("stop the cause, then repair, fixes it", healthy())
+    restore_sync_job()
+    check("restoring the job without resyncing leaves the old drift", healthy(), want=False)
+    clean()
+    inject(SYNC)
+    restore_sync_job()
+    resync_ledger()
+    check("restore the job, then resync the ledger, fixes it", healthy())
     clean()
     scenarios.reset()
     print("ORACLE", "PASS" if not bad else "%d CHECK" % bad)

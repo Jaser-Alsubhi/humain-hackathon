@@ -11,7 +11,7 @@ def test_scenarios_know_the_silent_faults():
 
 
 def test_sync_corruption_has_its_own_fix():
-    assert scenarios.correct(silent.SYNC) == {"disable_sync_job", "repair_amounts_from_journal"}
+    assert scenarios.correct(silent.SYNC) == {"restore_sync_job", "resync_ledger"}
 
 
 def test_probe_flags_corrupted_amounts(monkeypatch):
@@ -89,3 +89,53 @@ def test_action_labels_include_the_table_and_alerts_differ():
     assert agent._label("restart_service", {"service": "db"}) == "restart_service:db"
     assert agent._label("reconcile_from_journal", {}) == "reconcile_from_journal"
     assert agent.ALERT_DATA != agent.ALERT
+
+
+_BASE = "\n".join(["journal\t5", "orders\t5", "payments\t5", "orders_missing\t0", "payments_missing\t0",
+                   "unbooked_cents\t0", "amount_mismatch\t0", "sample_orders_missing\t", "sample_payments_missing\t"])
+
+
+def _ledger_sql(rows, mismatch, probe):
+    ledger_out = "\n".join(["ledger_rows\t%d" % rows, "ledger_missing\t0", "ledger_mismatch\t%d" % mismatch,
+                            "ledger_drift_cents\t%d" % (mismatch * 5), "ledger_sample_checked\t2",
+                            "ledger_sample_wrong\t%d" % (1 if mismatch else 0)])
+
+    def fake(q, *a, **k):
+        if "information_schema.tables" in q:
+            return 0, "1"
+        if "ledger_missing" in q:
+            return 0, ledger_out
+        if "ledger" in q:
+            return 0, probe
+        if "INSERT INTO" in q:
+            return 0, "1"
+        return 0, _BASE
+    return fake
+
+
+def test_invariants_compare_the_ledger_when_it_exists(monkeypatch):
+    monkeypatch.setattr(silent, "run_sql", _ledger_sql(5, 3, "1"))
+    r = silent.invariants()
+    assert r["ledger_mismatch"] == 3 and r["ledger_sample_wrong"] == 1 and r["clean"] is False
+    monkeypatch.setattr(silent, "run_sql", _ledger_sql(5, 0, "1"))
+    assert silent.invariants()["clean"] is True
+
+
+def test_probe_checks_what_the_ledger_stored(monkeypatch):
+    monkeypatch.setattr(silent, "run_sql", _ledger_sql(5, 0, "8"))
+    assert silent.probe_writes()["ledger"].startswith("CORRUPTED")
+    monkeypatch.setattr(silent, "run_sql", _ledger_sql(5, 0, "-1"))
+    assert silent.probe_writes()["ledger"].startswith("LOST")
+    monkeypatch.setattr(silent, "run_sql", _ledger_sql(5, 0, "1"))
+    assert silent.probe_writes()["ledger"] == "stored"
+
+
+def test_ledger_tools_do_nothing_without_a_ledger(monkeypatch):
+    monkeypatch.setattr(silent, "run_sql", lambda *a, **k: (0, "0"))
+    assert "no ledger" in silent.restore_sync_job()
+    assert "no ledger" in silent.resync_ledger()
+
+
+def test_buggy_sync_job_differs_from_the_standard_one_only_in_the_copied_amount():
+    assert silent.SYNC_GOOD != silent.SYNC_BUGGY
+    assert silent.SYNC_GOOD.replace("NEW.amount_cents,", "") == silent.SYNC_BUGGY.replace("NEW.amount_cents + FLOOR(NEW.id / 5),", "")
