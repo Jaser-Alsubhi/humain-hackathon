@@ -167,3 +167,30 @@ On `hung_backend` every run took one action, the restart of the backend, with ne
 - 12 faults with one run each is a small sample, and temperature 0 means a rerun would likely repeat these results.
 - Docker Desktop reported a full disk on the laptop at about the time the last faults ran, because of a large unrelated download. The results table shows 0 infrastructure errors, so every run is counted as it is. The saved step lists hold only tool names, not tool output, so they cannot show whether Docker was failing during a run. I cannot rule out that the disk problem slowed `fz-de4c32` (331 s, the longest run).
 - The fault combinations include families the agent saw in dev (host name, password, database name, pauses, exhaustion), but not these exact combinations.
+
+## #8 Rehearse mode: an exploratory comparison on 12 fresh faults
+
+**What was run.** `python -m recovery.evaluate --set fresh --methods agent,agent+rehearse --repeats 1`, once. The 12 faults are a third split in `results/fuzz_manifest.json` (`fresh`, seed 20261030 plus 2), generated after the held-out run. They are fresh, but they are **not a held-out test**: the rehearse gate was designed after I had seen how the agent failed on the held-out set, so this comparison is exploratory. One fault from the first draw of this split (`fz-2e60bb`, database paused + backend stopped) was dropped and replaced before any agent ran, because it failed the zero-token oracle twice: the scripted fix did not restore readiness. The drop is recorded in the manifest (`fresh_dropped`).
+
+**What rehearse mode does.** Off by default. A restart or recreate is refused until the agent has looked at that service's logs (or the frozen-process list), and a config rollback is snapshotted and reverted if the site is not ready afterwards.
+
+| Fault | Combination | Agent (wrong actions) | Agent + rehearse (wrong actions) |
+|---|---|---|---|
+| fz-6c88f2 | db_stop + cfg_host + be_pause | yes (1), 45 s | no (2), 200 s |
+| fz-a08d85 | cfg_host + be_stop | yes (0), 19 s | yes (0), 23 s |
+| fz-541676 | db_stop + cfg_host + be_pause | yes (1), 43 s | yes (0), 41 s |
+| fz-1387d0 | db_pause + cfg_host + be_pause | yes (1), 49 s | no (2), 216 s |
+| fz-c7d614 | db_stop + be_pause | yes (1), 44 s | yes (1), 45 s |
+| fz-0004bb | db_exhaust + cfg_password + be_stop | no (1), 220 s | yes (0), 62 s |
+| fz-74be09 | db_stop + be_stop | yes (0), 18 s | yes (0), 19 s |
+| fz-a6e0a7 | db_stop + cfg_password | yes (0), 27 s | yes (0), 35 s |
+| fz-c2e5dc | db_stop + cfg_password + be_stop | yes (0), 27 s | yes (0), 50 s |
+| fz-a4506b | cfg_password + be_pause | yes (1), 36 s | yes (0), 47 s |
+| fz-fcc1bb | db_exhaust + cfg_dbname + be_pause | no (1), 193 s | no (0), 161 s |
+| fz-23ab7e | db_exhaust + be_pause | yes (1), 29 s | yes (1), 26 s |
+
+**Totals.** Agent 10/12 recovered, 8 wrong actions in 8 runs, 297,055 tokens. Agent + rehearse 9/12 recovered, 6 wrong actions in 4 runs, 346,333 tokens.
+
+**What this shows.** Rehearse mode halved the number of runs with any wrong action (8 to 4) and cut the total from 8 to 6, but it recovered one fewer fault and used about 17% more tokens. It is not a clear improvement. Two of its three failures (`fz-6c88f2`, `fz-1387d0`) were its worst runs: each made 2 wrong actions and took 200 s or more, so the gate did not prevent a bad sequence there. It did turn one of the agent's misses (`fz-0004bb`) into a recovery. With 12 faults and one run each, the difference between 10 and 9 recoveries is within noise. The plain agent here is level with its own held-out result (10/12), and both modes still make wrong actions, so wrong actions are not solved.
+
+**Limits.** Small sample, one run per fault, no baselines run on this split in this table. Rehearse mode stays off by default in the live demo and in all other results in this document.
