@@ -132,4 +132,4 @@ Built during the event: the orders pipeline and intake journal, the silent data 
 
 - Website: https://mend-ai.swedencentral.cloudapp.azure.com
 - Slides: uploaded in the project's Presentation section on the hackathon platform
-- Demo video: added at submission
+- Demo video: https://drive.google.com/file/d/17djvYXk-K5r5BgPk2ZYpvRrBD3fI4Ky4/view
