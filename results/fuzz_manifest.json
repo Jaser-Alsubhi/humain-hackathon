@@ -386,19 +386,6 @@
     {
       "faults": [
         {
-          "p": "db_pause",
-          "arg": null
-        },
-        {
-          "p": "be_stop",
-          "arg": null
-        }
-      ],
-      "id": "fz-2e60bb"
-    },
-    {
-      "faults": [
-        {
           "p": "cfg_password",
           "arg": "changeme"
         },
@@ -425,6 +412,29 @@
         }
       ],
       "id": "fz-fcc1bb"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_exhaust",
+          "arg": null
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-23ab7e"
+    }
+  ],
+  "fresh_dropped": [
+    {
+      "id": "fz-2e60bb",
+      "faults": [
+        "db_pause",
+        "be_stop"
+      ],
+      "reason": "failed the zero-token oracle twice: the scripted fix (unpause db, start backend) did not restore readiness"
     }
   ]
 }
