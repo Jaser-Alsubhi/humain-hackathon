@@ -174,10 +174,10 @@ def _do(action):
     return fn(service) if service else fn()
 
 
-def oracle(split):
+def oracle(split, only=None):
     from recovery import scenarios
     bad = 0
-    chosen = specs(split)
+    chosen = [s for s in specs(split) if only is None or s["id"] == only]
     for s in chosen:
         scenarios.reset()
         inject(s)
@@ -233,7 +233,8 @@ def main():
     elif "--generate" in a:
         generate(force="--force" in a)
     elif "--oracle" in a:
-        oracle(a[a.index("--oracle") + 1])
+        i = a.index("--oracle")
+        oracle(a[i + 1], a[i + 2] if len(a) > i + 2 else None)
     elif "--report" in a:
         report()
     else:
