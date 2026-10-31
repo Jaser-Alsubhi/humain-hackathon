@@ -31,6 +31,13 @@ Every run saved in the results file is counted, failures included. The file keep
 - **Where it ties.** On 12 unseen generated faults, run once on frozen code, the agent and a hand-written runbook both recovered 10.
 - **Where it is weak.** On those 12 faults the agent made 6 wrong actions (the runbook made none) and used about 24,000 tokens per run. In the monitored run of the unfixable fault the first attempt restarted twice before the second attempt escalated.
 
+## Impact
+
+- **Recovery without waiting for a person.** On the live site, a stopped database is detected by the monitor, fixed and verified in 16 seconds in the recorded run, with nobody pressing anything.
+- **Lost data comes back.** Orders and payments that were silently dropped are restored from the intake journal, messages a queue lost are replayed, and corrupted ledger rows are corrected. Records lost and recovered are counted in `docs/EVIDENCE.md`.
+- **People are called only when needed.** When no tool can fix the cause, Mend hands over a ticket with what it found, what it tried and what it recommends, instead of retrying.
+- **Measured, not claimed.** Two baselines on the same faults, a blind test locked by hash before any agent ran, and the tie with the runbook reported as it is.
+
 ## The five problems from the brief
 
 | Problem | Our scenario | Status |
@@ -115,7 +122,7 @@ Built during the event: the orders pipeline and intake journal, the silent data 
 - Most scenarios were designed knowing their fix, so dev results are easier than unseen faults.
 - Repeats are small (3 to 5), so results show stability, not statistical rates. The held-out set has 12 faults with one run each, so 10/12 is a small sample too.
 - The ledger in the sync scenario lives in the same database, so it is a simulated replica.
-- The Break it button runs the real agent on a small shared server, so it is limited to 3 runs per visitor per hour and 25 per day, one at a time, with a kill switch. Each of its five faults was run once live, which shows the chain works, not a rate. The recorded replay is always available.
+- The Break it button runs the real agent on a small shared server, so it is limited to 3 runs per visitor per hour and 25 per day, one at a time, with a kill switch. Five of its six faults were run once live, which shows the chain works, not a rate. The recorded replay is always available.
 - The queue is a table and a worker thread in the same database, not a message broker.
 - In the one monitored run of the unfixable fault, the first agent attempt restarted the backend twice and ended without a ticket. The monitor's second attempt escalated correctly, so the full incident ended with a ticket, but not on the first pass.
 - The monitor detects silent faults only through the data checks (orders, payments, the ledger and the queue). A silent fault elsewhere would not be seen.
@@ -124,4 +131,5 @@ Built during the event: the orders pipeline and intake journal, the silent data 
 ## Links
 
 - Website: https://mend-ai.swedencentral.cloudapp.azure.com
-- Demo video, slides: added at submission
+- Slides: uploaded in the project's Presentation section on the hackathon platform
+- Demo video: added at submission
