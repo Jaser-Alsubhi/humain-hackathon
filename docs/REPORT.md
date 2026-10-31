@@ -105,6 +105,6 @@ Baselines first, always. The naive restart fixes almost nothing because most fau
 2. **The queue is a simulation.** It is a table and a worker thread in the same database, not a message broker, and the fault was designed knowing the fix.
 3. **Hangs.** The fix was made after seeing the failures and depends on the frozen-process tool, and the plain freeze is also fixed by a blanket restart.
 4. **Tool coverage.** New fault families need new tools. A more general tool set (or a sandboxed shell with review) would widen coverage.
-5. **Rehearse before acting.** Test each fix on a throwaway copy and revert automatically if health gets worse. Not built.
+5. **Rehearse before acting.** Built as an optional mode (off by default): restarts are gated on having read the logs, and config rollbacks are reverted if the site is not ready afterwards. On 12 fresh faults it cut runs with a wrong action from 8 to 4 but recovered 9/12 against 10/12 for the plain agent, so it is not a clear improvement (`docs/EVIDENCE.md`, section 8). A throwaway-copy rehearsal of every fix is not built.
 6. **Incident memory and early warning.** Not built.
 7. **Statistics.** Three to five repeats show stability, not rates. More runs and the fuzzer's confidence intervals would firm this up.
