@@ -104,7 +104,7 @@ alert -> investigate (logs, health, process state, data checks) -> choose the le
 
 ## What was built when
 
-Built before the event opened (before 14:00 on Friday 30 October): the base stack (FastAPI, React, MySQL, Docker Compose), the evaluation scaffold in `eval/` and `src/`, the agent loop with its guard, the two baselines, the outage faults, the fault fuzzer with its locked split, and the six extra faults.
+Built before the event opened (before 14:00 on Friday 30 October): the base stack (FastAPI, React, MySQL, Docker Compose), an earlier evaluation scaffold (removed in the final cleanup because Mend does not use it), the agent loop with its guard, the two baselines, the outage faults, the fault fuzzer with its locked split, and the six extra faults.
 
 Built during the event: the orders pipeline and intake journal, the silent data faults and invariant checks, the escalation tool and unfixable scenario, the sync-corruption scenario, the frozen-process detection, the retry hardening, the message queue and its overflow fault, the unattended monitor, the public Break it button and the server behind it, the project website and its automatic deploy to Azure.
 
