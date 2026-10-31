@@ -93,6 +93,7 @@ TOOLS = [
            "recommendation": {"type": "string"}}, ["summary", "findings", "tried", "recommendation"]),
 ]
 
+GATED = {"restart_service", "recreate_service"}
 ACT = {"restart_service", "start_service", "unpause_service", "rollback_config", "recreate_service",
        "restore_table", "reconcile_from_journal", "restore_sync_job", "resync_ledger", "replay_queue"}
 
@@ -101,6 +102,18 @@ def _check_health(wait_seconds=0):
     if wait_seconds:
         ops.wait_ready(min(int(wait_seconds), 15))
     return ops.check_health()
+
+
+def _rehearsed_rollback():
+    """Rehearse mode: snapshot the active config, roll back, and restore the snapshot if a ready site stopped being ready."""
+    before = ops.ACTIVE.read_text(encoding="utf-8")
+    was_ready = ops.check_health()["ready"][0] == 200
+    out = ops.rollback_config()
+    if was_ready and not ops.wait_ready(25):
+        ops.write_config(ops.ACTIVE, before)
+        ops.compose("up", "-d", "--no-deps", "backend")
+        return "reverted: the site was ready before this rollback and not after, so the previous config was restored. " + out
+    return out
 
 
 REGISTRY = {
@@ -165,8 +178,10 @@ class Guard:
     """Only registered tools run, with budgets, optional dry-run and redacted output."""
 
     def __init__(self, registry, actions, max_steps=12, max_actions=4, dry_run=False, reserve=0, always=(),
-                 depends=None, settle=12, wait=None, clock=time.time):
+                 depends=None, settle=12, wait=None, clock=time.time, rehearse=False):
         self.registry = registry
+        self.rehearse = rehearse
+        self.looked = set()
         self.actions = actions
         self.max_steps = max_steps
         self.max_actions = max_actions
@@ -202,6 +217,19 @@ class Guard:
             if self.clock() >= end:
                 return None
 
+    def _gate(self, name, args):
+        """Rehearse mode: a disruptive action needs evidence about its target first. Returns a refusal or None."""
+        if name not in GATED:
+            return None
+        target = self._target(name, args)
+        seen = self.looked
+        if (("get_logs", target) in seen or ("find_frozen_processes", None) in seen
+                or (target == "db" and ("db_status", None) in seen)):
+            return None
+        return ("blocked by rehearse mode: %s %s changes a running service and no evidence points at it yet. "
+                "Read get_logs for %s (or run find_frozen_processes) first, then act only if it shows the cause."
+                % (name, target, target))
+
     def dispatch(self, name, args):
         """Return (result_text, blocked)."""
         if name not in self.registry:
@@ -222,7 +250,14 @@ class Guard:
             if held:
                 self.steps += 1
                 return held, True
+        if name in self.actions and self.rehearse:
+            refused = self._gate(name, args)
+            if refused:
+                self.steps += 1
+                return refused, True
         self.steps += 1
+        if name not in self.actions:
+            self.looked.add((name, (args or {}).get("service")))
         if name in self.actions:
             self.action_count += 1
             if self.dry_run:
@@ -297,7 +332,7 @@ def _chat(client, model, msgs):
                 time.sleep(_retry_after(e, attempt))
 
 
-def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_seconds=240, alert=None, data_mode=None):
+def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_seconds=240, alert=None, data_mode=None, rehearse=False):
     """alert and data_mode are set by the live monitor (recovery.watch): its own alert text, and whether the failing signal was data."""
     from openai import OpenAI
 
@@ -314,8 +349,9 @@ def run(scenario, max_steps=12, max_actions=4, dry_run=False, verbose=True, max_
     STATS["last_error"] = ""
     STATS["wait_seconds"] = 0.0
     escalation.LAST["path"] = None
-    guard = Guard(REGISTRY, ACT, max_steps, max_actions, dry_run, reserve=2, always={"check_health", "check_invariants", "escalate"},
-                  depends=ops.dependencies(), settle=12, wait=ops.wait_ready)
+    registry = dict(REGISTRY, rollback_config=_rehearsed_rollback) if rehearse else REGISTRY
+    guard = Guard(registry, ACT, max_steps, max_actions, dry_run, reserve=2, always={"check_health", "check_invariants", "escalate"},
+                  depends=ops.dependencies(), settle=12, wait=ops.wait_ready, rehearse=rehearse)
     AUDIT_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     audit = AUDIT_DIR / ("%s_%s.jsonl" % (stamp, scenario))

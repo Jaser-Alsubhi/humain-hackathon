@@ -169,3 +169,84 @@ def test_scenarios_know_the_extra_faults():
     from recovery import faults_extra, scenarios
     for name in faults_extra.names():
         assert scenarios.correct(name) == set(faults_extra.EXTRA[name][1])
+
+
+def _restart_guard(**kw):
+    calls = []
+
+    def restart_service(service):
+        calls.append(service)
+        return "restarted"
+
+    reg = {"restart_service": restart_service, "start_service": lambda service: "started",
+           "get_logs": lambda service: "log", "find_frozen_processes": lambda: "none"}
+    return Guard(reg, {"restart_service", "start_service"}, **kw), calls
+
+
+def test_rehearse_blocks_a_restart_before_any_evidence():
+    g, calls = _restart_guard(rehearse=True)
+    out, blocked = g.dispatch("restart_service", {"service": "backend"})
+    assert blocked and "rehearse" in out and calls == [] and g.action_count == 0
+
+
+def test_rehearse_allows_a_restart_after_reading_that_services_logs():
+    g, calls = _restart_guard(rehearse=True)
+    g.dispatch("get_logs", {"service": "backend"})
+    out, blocked = g.dispatch("restart_service", {"service": "backend"})
+    assert not blocked and calls == ["backend"]
+
+
+def test_rehearse_evidence_is_per_service():
+    g, calls = _restart_guard(rehearse=True)
+    g.dispatch("get_logs", {"service": "db"})
+    _, blocked = g.dispatch("restart_service", {"service": "backend"})
+    assert blocked and calls == []
+
+
+def test_rehearse_accepts_frozen_process_evidence_and_never_gates_start():
+    g, calls = _restart_guard(rehearse=True)
+    _, blocked = g.dispatch("start_service", {"service": "db"})
+    assert not blocked
+    g.dispatch("find_frozen_processes", {})
+    _, blocked = g.dispatch("restart_service", {"service": "backend"})
+    assert not blocked
+
+
+def test_rehearse_is_off_by_default():
+    g, calls = _restart_guard()
+    _, blocked = g.dispatch("restart_service", {"service": "backend"})
+    assert not blocked and calls == ["backend"]
+
+
+def test_rehearsed_rollback_restores_the_config_if_a_ready_site_breaks(monkeypatch, tmp_path):
+    from recovery import agent, ops
+    active = tmp_path / "active.yml"
+    active.write_text("before", encoding="utf-8")
+    monkeypatch.setattr(ops, "ACTIVE", active)
+    monkeypatch.setattr(ops, "check_health", lambda: {"ready": (200, "ok")})
+    monkeypatch.setattr(ops, "wait_ready", lambda s=60: False)
+    monkeypatch.setattr(ops, "compose", lambda *a, **k: (0, ""))
+
+    def rollback():
+        active.write_text("rolled", encoding="utf-8")
+        return "config rolled back"
+
+    monkeypatch.setattr(ops, "rollback_config", rollback)
+    out = agent._rehearsed_rollback()
+    assert out.startswith("reverted") and active.read_text(encoding="utf-8") == "before"
+
+
+def test_rehearsed_rollback_keeps_the_rollback_when_the_site_was_already_down(monkeypatch, tmp_path):
+    from recovery import agent, ops
+    active = tmp_path / "active.yml"
+    active.write_text("bad", encoding="utf-8")
+    monkeypatch.setattr(ops, "ACTIVE", active)
+    monkeypatch.setattr(ops, "check_health", lambda: {"ready": (0, "x")})
+    monkeypatch.setattr(ops, "wait_ready", lambda s=60: True)
+
+    def rollback():
+        active.write_text("good", encoding="utf-8")
+        return "config rolled back"
+
+    monkeypatch.setattr(ops, "rollback_config", rollback)
+    assert agent._rehearsed_rollback() == "config rolled back" and active.read_text(encoding="utf-8") == "good"

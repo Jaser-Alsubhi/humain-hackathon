@@ -244,5 +244,187 @@
       "id": "fz-de4c32"
     }
   ],
-  "heldout_sha256": "06d9e72e31e2c224f2ec6105c1c78ef1ec9bd2d9762e754740303dddb1771db0"
+  "heldout_sha256": "06d9e72e31e2c224f2ec6105c1c78ef1ec9bd2d9762e754740303dddb1771db0",
+  "fresh": [
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        },
+        {
+          "p": "cfg_host",
+          "arg": "mysql-primary"
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-6c88f2"
+    },
+    {
+      "faults": [
+        {
+          "p": "cfg_host",
+          "arg": "mysql-primary"
+        },
+        {
+          "p": "be_stop",
+          "arg": null
+        }
+      ],
+      "id": "fz-a08d85"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        },
+        {
+          "p": "cfg_host",
+          "arg": "database"
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-541676"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_pause",
+          "arg": null
+        },
+        {
+          "p": "cfg_host",
+          "arg": "mysql-primary"
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-1387d0"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-c7d614"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_exhaust",
+          "arg": null
+        },
+        {
+          "p": "cfg_password",
+          "arg": "wrongpass"
+        },
+        {
+          "p": "be_stop",
+          "arg": null
+        }
+      ],
+      "id": "fz-0004bb"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        },
+        {
+          "p": "be_stop",
+          "arg": null
+        }
+      ],
+      "id": "fz-74be09"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        },
+        {
+          "p": "cfg_password",
+          "arg": "rotated2026"
+        }
+      ],
+      "id": "fz-a6e0a7"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_stop",
+          "arg": null
+        },
+        {
+          "p": "cfg_password",
+          "arg": "changeme"
+        },
+        {
+          "p": "be_stop",
+          "arg": null
+        }
+      ],
+      "id": "fz-c2e5dc"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_pause",
+          "arg": null
+        },
+        {
+          "p": "be_stop",
+          "arg": null
+        }
+      ],
+      "id": "fz-2e60bb"
+    },
+    {
+      "faults": [
+        {
+          "p": "cfg_password",
+          "arg": "changeme"
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-a4506b"
+    },
+    {
+      "faults": [
+        {
+          "p": "db_exhaust",
+          "arg": null
+        },
+        {
+          "p": "cfg_dbname",
+          "arg": "hackdb_old"
+        },
+        {
+          "p": "be_pause",
+          "arg": null
+        }
+      ],
+      "id": "fz-fcc1bb"
+    }
+  ]
 }

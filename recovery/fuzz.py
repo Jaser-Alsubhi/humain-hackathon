@@ -1,6 +1,7 @@
 ﻿"""Fault fuzzer: random combinations of fault primitives, a locked dev/held-out split, an oracle check and statistics.
 python -m recovery.fuzz --generate            create results/fuzz_manifest.json once (--force to overwrite)
 python -m recovery.fuzz --oracle dev|heldout  check every scenario breaks the stack and its scripted fix repairs it (no LLM)
+python -m recovery.fuzz --generate-fresh     add a third split of 12 new faults (dev and held-out are not touched)
 python -m recovery.fuzz --report              recovery rate with 95% Wilson intervals, by split and number of faults
 Agent runs: python -m recovery.evaluate --set dev|heldout --methods runbook,agent"""
 import hashlib
@@ -130,6 +131,20 @@ def generate(force=False):
             print("  %s  %s" % (s["id"], describe(s)))
 
 
+def generate_fresh():
+    """A third split of 12 new faults, added to the manifest without touching dev or held-out (the held-out hash stays valid)."""
+    m = load()
+    if "fresh" in m:
+        print("fresh split already exists")
+        return
+    used = {key(s) for s in m["dev"] + m["heldout"]}
+    m["fresh"] = make(SEED + 2, 12, set(FIX), need_heldout=True, exclude=used)
+    MANIFEST.write_text(json.dumps(m, indent=2), encoding="utf-8")
+    print("fresh: %d scenarios" % len(m["fresh"]))
+    for s in m["fresh"]:
+        print("  %s  %s" % (s["id"], describe(s)))
+
+
 def load():
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
 
@@ -147,7 +162,7 @@ def ids(split):
 
 def lookup(name):
     m = load()
-    for s in m["dev"] + m["heldout"]:
+    for s in m["dev"] + m["heldout"] + m.get("fresh", []):
         if s["id"] == name:
             return s
     raise ValueError(name)
@@ -193,7 +208,9 @@ def report():
     m = load()
     rows = json.loads(EVAL.read_text(encoding="utf-8")) if EVAL.exists() else []
     print("%-8s %-8s %-26s %-6s %-8s %-6s %-14s %s" % ("split", "method", "model", "faults", "recov", "rate", "95% CI", "wrong/trial"))
-    for split in ("dev", "heldout"):
+    for split in ("dev", "heldout", "fresh"):
+        if split not in m:
+            continue
         size = {s["id"]: len(s["faults"]) for s in m[split]}
         mine = [r for r in rows if r["scenario"] in size and "error" not in r]
         for method, model in sorted({(r["method"], r.get("model", "-")) for r in mine}):
@@ -211,7 +228,9 @@ def report():
 
 def main():
     a = sys.argv[1:]
-    if "--generate" in a:
+    if "--generate-fresh" in a:
+        generate_fresh()
+    elif "--generate" in a:
         generate(force="--force" in a)
     elif "--oracle" in a:
         oracle(a[a.index("--oracle") + 1])

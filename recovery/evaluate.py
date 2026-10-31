@@ -35,7 +35,7 @@ def model_name():
 
 
 def model_for(method):
-    return model_name() if method == "agent" else "-"
+    return model_name() if method.startswith("agent") else "-"
 
 
 def wrong_actions(name, sequence):
@@ -53,7 +53,7 @@ def trial(name, method):
         elif method == "runbook":
             r = baseline.runbook()
         else:
-            a = agent.run(name, verbose=False)
+            a = agent.run(name, verbose=False, rehearse=method == "agent+rehearse")
             t = a["time_to_recover"]
             r = {"recovered": a["recovered"], "actions": a["actions"], "tokens": a["tokens"],
                  "steps": a["steps"], "verified": a["verified"], "bad_json": a["bad_json"],
@@ -61,9 +61,9 @@ def trial(name, method):
                  "rate_retries": a["rate_retries"], "nudges": a.get("nudges", 0), "wait_seconds": a.get("wait_seconds", 0),
                  "models": a.get("models", {}), "escalated_at": a.get("escalated_at"), "seconds": t if t is not None else a["seconds"],
                  "handed_off": a.get("handed_off", False), "ticket": a.get("ticket")}
-        if name in silent.TARGET and method != "agent":
+        if name in silent.TARGET and not method.startswith("agent"):
             r["recovered"] = silent.healthy()
-        if name in unfixable.TARGET and method == "agent":
+        if name in unfixable.TARGET and method.startswith("agent"):
             r["recovered"] = bool(r.get("handed_off")) and escalation.handled(r.get("ticket"))
         r["wrong_actions"] = len(wrong_actions(name, r.get("sequence", [])))
     except Exception as e:
@@ -138,7 +138,7 @@ def main():
                 print("%-12s %-8s recovered=%-5s actions=%d wrong=%s %5.0fs tokens=%s %s" % (
                     name, method, r["recovered"], r["actions"], r.get("wrong_actions", "-"),
                     r["seconds"], r.get("tokens", "-"), r.get("error", "")))
-                if method == "agent":
+                if method.startswith("agent"):
                     time.sleep(pause)
     scenarios.reset()
     summary(rows)
